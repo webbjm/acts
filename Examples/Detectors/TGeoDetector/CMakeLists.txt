@@ -2,6 +2,8 @@ acts_add_library(
     ExamplesDetectorTGeo
     SHARED
     src/AlignedTGeoDetectorElement.cpp
+    src/SiTargetBuilder.cpp
+    src/StrawtubeBuilder.cpp
     src/TGeoDetector.cpp
     src/TGeoITkModuleSplitter.cpp
     ACTS_INCLUDE_FOLDER include/ActsExamples

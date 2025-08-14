@@ -19,6 +19,8 @@
 #include "ActsExamples/GenericDetector/AlignedGenericDetector.hpp"
 #include "ActsExamples/GenericDetector/GenericDetector.hpp"
 #include "ActsExamples/TGeoDetector/TGeoDetector.hpp"
+#include "ActsExamples/TGeoDetector/SiTargetBuilder.hpp"
+#include "ActsExamples/TGeoDetector/StrawtubeBuilder.hpp"
 #include "ActsExamples/TelescopeDetector/TelescopeDetector.hpp"
 #include "ActsExamples/Utilities/Options.hpp"
 
@@ -161,6 +163,36 @@ void addDetector(Context& ctx) {
                        materialDecorator, volumes);
 
     patchKwargsConstructor(c);
+  }
+
+  {
+    auto d = py::class_<SiTargetBuilder, Detector, std::shared_ptr<SiTargetBuilder>>(
+                 mex, "SiTargetBuilder")
+                 .def(py::init<const SiTargetBuilder::Config&>());
+
+    auto c = py::class_<SiTargetBuilder::Config>(d, "Config").def(py::init<>());
+
+    ACTS_PYTHON_STRUCT(c, surfaceLogLevel, layerLogLevel, volumeLogLevel,
+                       fileName
+                       );
+
+    patchKwargsConstructor(c);
+
+  }
+
+  {
+    auto d = py::class_<StrawtubeBuilder, Detector, std::shared_ptr<StrawtubeBuilder>>(
+                 mex, "StrawtubeBuilder")
+                 .def(py::init<const StrawtubeBuilder::Config&>());
+
+    auto c = py::class_<StrawtubeBuilder::Config>(d, "Config").def(py::init<>());
+
+    ACTS_PYTHON_STRUCT(c, surfaceLogLevel, layerLogLevel, volumeLogLevel,
+                       fileName
+                       );
+
+    patchKwargsConstructor(c);
+
   }
 
   {
