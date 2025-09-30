@@ -9,6 +9,8 @@
 #include "Acts/Definitions/PdgParticle.hpp"
 #include "Acts/EventData/ParticleHypothesis.hpp"
 #include "Acts/Plugins/Python/Utilities.hpp"
+#include "ActsFatras/EventData/Barcode.hpp"
+
 
 #include <type_traits>
 
@@ -23,7 +25,7 @@ namespace Acts::Python {
 
 void addEventData(Context& ctx) {
   auto [m, mex] = ctx.get("main", "examples");
-
+  {
   py::class_<Acts::ParticleHypothesis>(m, "ParticleHypothesis")
       .def(py::init([](Acts::PdgParticle absPdg, float mass, float absCharge) {
              return Acts::ParticleHypothesis(absPdg, mass,
@@ -78,6 +80,39 @@ void addEventData(Context& ctx) {
           "chargedGeantino", [](py::object /* self */) {
             return Acts::ParticleHypothesis::chargedGeantino();
           });
+    }
+
+    {
+        py::class_<ActsFatras::Barcode>(m, "Barcode")
+            .def(py::init<>())
+            .def(py::init<ActsFatras::Barcode::Value>())
+            .def(py::init([](int primaryVertex, int secondaryVertex, int part, int gen, int subpart) {
+            return ActsFatras::Barcode()
+                .setVertexPrimary(primaryVertex)
+                .setVertexSecondary(secondaryVertex)
+                .setParticle(part)
+                .setGeneration(gen)
+                .setSubParticle(subpart);
+            }),
+             py::arg("primaryVertex"), py::arg("secondaryVertex"), py::arg("part"), py::arg("gen"), py::arg("subpart"))
+             .def_property_readonly("value", &ActsFatras::Barcode::value)
+            ;
+    }
+/*
+    {
+        py::class_<ActsFatras::Barcode>(m, "VertexId")
+            .def(py::init<>())
+            .def(py::init<ActsFatras::Barcode::Value>())
+            .def(py::init([](int primaryVertex, int secondaryVertex, int gen) {
+            return ActsFatras::Barcode()
+                .setVertexPrimary(primaryVertex)
+                .setVertexSecondary(secondaryVertex)
+                .setGeneration(gen);
+            }),
+             py::arg("primaryVertex"), py::arg("secondaryVertex"), py::arg("gen"))
+            ;
+    }
+    */
 }
 
 }  // namespace Acts::Python
