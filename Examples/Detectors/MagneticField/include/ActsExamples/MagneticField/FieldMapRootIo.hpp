@@ -10,6 +10,7 @@
 
 #include "Acts/Definitions/Algebra.hpp"
 #include "ActsExamples/MagneticField/MagneticField.hpp"
+#include "TVector3.h"
 
 #include <array>
 #include <cstddef>
@@ -106,4 +107,10 @@ detail::InterpolatedMagneticField3 makeMagneticFieldMapXyzFromRoot(
     const std::string& fieldMapFile, const std::string& treeName,
     double lengthUnit, double BFieldUnit, bool firstOctant = false);
 
+detail::InterpolatedMagneticField3 makeMagneticFieldMapXyzFromRoot(
+    const std::function<std::size_t(std::array<std::size_t, 3> binsXYZ,
+                                    std::array<std::size_t, 3> nBinsXYZ)>&
+        localToGlobalBin,
+    const std::string& fieldMapFile, const std::string& treeName,
+    double lengthUnit, double BFieldUnit, const TVector3& translateToGlobal, bool firstOctant = false);
 }  // namespace ActsExamples

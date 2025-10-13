@@ -119,3 +119,58 @@ ActsExamples::makeMagneticFieldMapXyzFromRoot(
   return Acts::fieldMapXYZ(localToGlobalBin, xPos, yPos, zPos, bField,
                            lengthUnit, BFieldUnit, firstOctant);
 }
+
+ActsExamples::detail::InterpolatedMagneticField3
+ActsExamples::makeMagneticFieldMapXyzFromRoot(
+    const std::function<std::size_t(std::array<std::size_t, 3> binsXYZ,
+                                    std::array<std::size_t, 3> nBinsXYZ)>&
+        localToGlobalBin,
+    const std::string& fieldMapFile, const std::string& treeName,
+    double lengthUnit, double BFieldUnit, const TVector3& translateToGlobal, bool firstOctant) {
+  /// [1] Read in field map file
+  // Grid position points in x, y and z
+  std::vector<double> xPos;
+  std::vector<double> yPos;
+  std::vector<double> zPos;
+  // components of magnetic field on grid points
+  std::vector<Acts::Vector3> bField;
+  // [1] Read in file and fill values
+  std::unique_ptr<TFile> inputFile(TFile::Open(fieldMapFile.c_str()));
+  if (inputFile == nullptr) {
+    throw std::runtime_error("file does not exist");
+  }
+  TTree* tree = inputFile->Get<TTree>(treeName.c_str());
+  if (tree == nullptr) {
+    throw std::runtime_error("object not found in file");
+  }
+  Int_t entries = tree->GetEntries();
+
+  double x = 0, y = 0, z = 0;
+  double Bx = 0, By = 0, Bz = 0;
+
+  tree->SetBranchAddress("x", &x);
+  tree->SetBranchAddress("y", &y);
+  tree->SetBranchAddress("z", &z);
+
+  tree->SetBranchAddress("Bx", &Bx);
+  tree->SetBranchAddress("By", &By);
+  tree->SetBranchAddress("Bz", &Bz);
+
+  // reserve size
+  xPos.reserve(entries);
+  yPos.reserve(entries);
+  zPos.reserve(entries);
+  bField.reserve(entries);
+
+  for (int i = 0; i < entries; i++) {
+    tree->GetEvent(i);
+    xPos.push_back(x + translateToGlobal.X());
+    yPos.push_back(y + translateToGlobal.Y());
+    zPos.push_back(z + translateToGlobal.Z());
+    bField.push_back(Acts::Vector3(Bx, By, Bz));
+  }
+
+  return Acts::fieldMapXYZ(localToGlobalBin, xPos, yPos, zPos, bField,
+                           lengthUnit, BFieldUnit, firstOctant);
+}
+

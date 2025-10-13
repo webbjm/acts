@@ -19,6 +19,8 @@
 #include "ActsExamples/MagneticField/FieldMapRootIo.hpp"
 #include "ActsExamples/MagneticField/FieldMapTextIo.hpp"
 
+#include "TVector.h"
+
 #include <array>
 #include <cstddef>
 #include <filesystem>
@@ -145,6 +147,40 @@ void addMagneticField(Context& ctx) {
       py::arg("file"), py::arg("tree") = "bField",
       py::arg("lengthUnit") = Acts::UnitConstants::mm,
       py::arg("BFieldUnit") = Acts::UnitConstants::T,
+      py::arg("firstOctant") = false);
+
+  mex.def(
+      "MagneticFieldMapXyz",
+      [](const std::string& filename, const std::string& tree,
+         double lengthUnit, double BFieldUnit, const TVector3 translateToGlobal, bool firstOctant) {
+        const std::filesystem::path file = filename;
+
+        auto mapBins = [](std::array<std::size_t, 3> bins,
+                          std::array<std::size_t, 3> sizes) {
+          return (bins[0] * (sizes[1] * sizes[2]) + bins[1] * sizes[2] +
+                  bins[2]);
+        };
+
+        if (file.extension() == ".root") {
+          auto map = ActsExamples::makeMagneticFieldMapXyzFromRoot(
+              std::move(mapBins), file.native(), tree, lengthUnit, BFieldUnit,
+              translateToGlobal, firstOctant);
+          return std::make_shared<
+              ActsExamples::detail::InterpolatedMagneticField3>(std::move(map));
+        } else if (file.extension() == ".txt") {
+          auto map = ActsExamples::makeMagneticFieldMapXyzFromText(
+              std::move(mapBins), file.native(), lengthUnit, BFieldUnit,
+              firstOctant);
+          return std::make_shared<
+              ActsExamples::detail::InterpolatedMagneticField3>(std::move(map));
+        } else {
+          throw std::runtime_error("Unsupported magnetic field map file type");
+        }
+      },
+      py::arg("file"), py::arg("tree") = "bField",
+      py::arg("lengthUnit") = Acts::UnitConstants::mm,
+      py::arg("BFieldUnit") = Acts::UnitConstants::T,
+      py::arg("translateToGlobal"),
       py::arg("firstOctant") = false);
 
   mex.def(
