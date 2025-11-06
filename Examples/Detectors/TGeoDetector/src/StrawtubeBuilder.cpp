@@ -128,18 +128,21 @@ namespace {
       std::make_shared<const Acts::LineBounds>(tube->GetRmax() * 1_cm, tube->GetDZ() * 1_cm);//(bounds[0], bounds[1]);
       std::shared_ptr<ShipDetectorElement> detElement = nullptr;
       detElement = std::make_shared<ShipDetectorElement>(
-          std::make_shared<const Acts::Transform3>(trafo), ppBounds, 3._mm,
+          std::make_shared<const Acts::Transform3>(trafo), ppBounds, 2._cm,
           surfaceMaterial);
 
       auto surface = detElement->surface().getSharedPtr();
       detElementStore.push_back(std::move(detElement));
       layerSurfaces.push_back(surface);
       
+      Acts::Vector3 lTrans(translation[2]*1_cm,0,0);
+      auto layerTransf = Acts::TGeoPrimitivesHelper::makeTransform(rotateFrame.col(0),rotateFrame.col(1),rotateFrame.col(2),lTrans);
       //Not the most elegant implementation, but cannot use multiple parser states due to naming of nodes
       if (n == 601 || n ==1232 || n==1863 || n==2464 || n==3065 || n== 3696 || n==4327 || n==4928 || n==5529 || n==6160 || n==6791 || n==7392 || n==7993 ||n==8624 ||n==9255 ||n==9856 ){
 
+          Acts::ProtoLayer pl(context, layerSurfaces);
           //Create plane layer comprised of sensitive straw surfaces
-          layers.push_back(layerCreator->planeLayer(context, layerSurfaces, 1, 600, Acts::AxisDirection::AxisX));
+          layers.push_back(layerCreator->planeLayer(context, layerSurfaces, 0, 0, Acts::AxisDirection::AxisX,pl,layerTransf));
           layerSurfaces.clear();
       }
     }

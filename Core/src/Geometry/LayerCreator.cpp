@@ -425,7 +425,8 @@ MutableLayerPtr LayerCreator::planeLayer(
   }
 
   // create the layer and push it back
-  auto pBounds = std::make_shared<RectangleBounds>(layerHalf1, layerHalf2);
+  // First parameter corresponds to "x" which is "z" in under our rotation
+  auto pBounds = std::make_shared<RectangleBounds>(layerHalf2, layerHalf1);
 
   // create the layer
   MutableLayerPtr pLayer =
