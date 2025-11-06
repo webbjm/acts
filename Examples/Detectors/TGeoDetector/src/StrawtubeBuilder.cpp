@@ -151,7 +151,7 @@ namespace {
 
     std::sort(positions.begin(), positions.end());
     Acts::Translation3 transVol(0, 0,
-                               (positions.front() + positions.back()) * 0.5);
+                               (positions.back()) * 0.5);
     Acts::RotationMatrix3 rotations = Acts::RotationMatrix3::Identity();
     Acts::Transform3 trafoVol(rotateFrame * transVol); 
 
@@ -159,7 +159,7 @@ namespace {
     // The volume bounds is set to be larger than cubic with planes
     std::shared_ptr<Acts::VolumeBounds> boundsVol = nullptr;
     boundsVol = std::make_shared<Acts::CuboidVolumeBounds>(
-        605._cm , 605._cm , length + 100._cm);
+        605._cm , 605._cm , positions.back()+50._cm);
 
 
     Acts::LayerArrayCreator::Config lacConfig;
