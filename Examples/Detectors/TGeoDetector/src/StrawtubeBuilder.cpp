@@ -135,8 +135,10 @@ namespace {
       detElementStore.push_back(std::move(detElement));
       layerSurfaces.push_back(surface);
       
+      //Define transformation for layers
       Acts::Vector3 lTrans(translation[2]*1_cm,0,0);
       auto layerTransf = Acts::TGeoPrimitivesHelper::makeTransform(rotateFrame.col(0),rotateFrame.col(1),rotateFrame.col(2),lTrans);
+
       //Not the most elegant implementation, but cannot use multiple parser states due to naming of nodes
       if (n == 601 || n ==1232 || n==1863 || n==2464 || n==3065 || n== 3696 || n==4327 || n==4928 || n==5529 || n==6160 || n==6791 || n==7392 || n==7993 ||n==8624 ||n==9255 ||n==9856 ){
 

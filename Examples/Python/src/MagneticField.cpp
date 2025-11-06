@@ -152,7 +152,8 @@ void addMagneticField(Context& ctx) {
   mex.def(
       "MagneticFieldMapXyz",
       [](const std::string& filename, const std::string& tree,
-         double lengthUnit, double BFieldUnit, const TVector3 translateToGlobal, bool firstOctant) {
+         double lengthUnit, double BFieldUnit, const Vector3& translateToGlobal, bool rotateAxis,
+         bool firstOctant) {
         const std::filesystem::path file = filename;
 
         auto mapBins = [](std::array<std::size_t, 3> bins,
@@ -164,7 +165,7 @@ void addMagneticField(Context& ctx) {
         if (file.extension() == ".root") {
           auto map = ActsExamples::makeMagneticFieldMapXyzFromRoot(
               std::move(mapBins), file.native(), tree, lengthUnit, BFieldUnit,
-              translateToGlobal, firstOctant);
+              translateToGlobal, rotateAxis, firstOctant);
           return std::make_shared<
               ActsExamples::detail::InterpolatedMagneticField3>(std::move(map));
         } else if (file.extension() == ".txt") {
@@ -181,6 +182,7 @@ void addMagneticField(Context& ctx) {
       py::arg("lengthUnit") = Acts::UnitConstants::mm,
       py::arg("BFieldUnit") = Acts::UnitConstants::T,
       py::arg("translateToGlobal"),
+      py::arg("rotateAxis") = false,
       py::arg("firstOctant") = false);
 
   mex.def(

@@ -112,5 +112,6 @@ detail::InterpolatedMagneticField3 makeMagneticFieldMapXyzFromRoot(
                                     std::array<std::size_t, 3> nBinsXYZ)>&
         localToGlobalBin,
     const std::string& fieldMapFile, const std::string& treeName,
-    double lengthUnit, double BFieldUnit, const TVector3& translateToGlobal, bool firstOctant = false);
+    double lengthUnit, double BFieldUnit, const Acts::Vector3& translateToGlobal,
+    bool rotateAxis = false, bool firstOctant = false);
 }  // namespace ActsExamples

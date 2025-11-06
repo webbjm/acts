@@ -126,7 +126,8 @@ ActsExamples::makeMagneticFieldMapXyzFromRoot(
                                     std::array<std::size_t, 3> nBinsXYZ)>&
         localToGlobalBin,
     const std::string& fieldMapFile, const std::string& treeName,
-    double lengthUnit, double BFieldUnit, const TVector3& translateToGlobal, bool firstOctant) {
+    double lengthUnit, double BFieldUnit, const Acts::Vector3& translateToGlobal,
+    bool rotateAxis,  bool firstOctant) {
   /// [1] Read in field map file
   // Grid position points in x, y and z
   std::vector<double> xPos;
@@ -145,8 +146,8 @@ ActsExamples::makeMagneticFieldMapXyzFromRoot(
   }
   Int_t entries = tree->GetEntries();
 
-  double x = 0, y = 0, z = 0;
-  double Bx = 0, By = 0, Bz = 0;
+  float x = 0, y = 0, z = 0;
+  float Bx = 0, By = 0, Bz = 0;
 
   tree->SetBranchAddress("x", &x);
   tree->SetBranchAddress("y", &y);
@@ -162,12 +163,24 @@ ActsExamples::makeMagneticFieldMapXyzFromRoot(
   zPos.reserve(entries);
   bField.reserve(entries);
 
-  for (int i = 0; i < entries; i++) {
-    tree->GetEvent(i);
-    xPos.push_back(x + translateToGlobal.X());
-    yPos.push_back(y + translateToGlobal.Y());
-    zPos.push_back(z + translateToGlobal.Z());
-    bField.push_back(Acts::Vector3(Bx, By, Bz));
+  if (rotateAxis){
+      for (int i = 0; i < entries; i++) {
+        tree->GetEvent(i);
+        xPos.push_back(z + translateToGlobal.z());
+        yPos.push_back(y + translateToGlobal.y());
+        zPos.push_back(-(x + translateToGlobal.x()));
+        bField.push_back(Acts::Vector3(Bx, By, Bz));
+      }
+
+  }
+  else{
+      for (int i = 0; i < entries; i++) {
+        tree->GetEvent(i);
+        xPos.push_back(x + translateToGlobal.x());
+        yPos.push_back(y + translateToGlobal.y());
+        zPos.push_back(z + translateToGlobal.z());
+        bField.push_back(Acts::Vector3(Bx, By, Bz));
+      }
   }
 
   return Acts::fieldMapXYZ(localToGlobalBin, xPos, yPos, zPos, bField,
