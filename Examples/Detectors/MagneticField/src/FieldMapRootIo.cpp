@@ -169,7 +169,7 @@ ActsExamples::makeMagneticFieldMapXyzFromRoot(
         xPos.push_back(z + translateToGlobal.z());
         yPos.push_back(y + translateToGlobal.y());
         zPos.push_back(-(x + translateToGlobal.x()));
-        bField.push_back(Acts::Vector3(Bx, By, Bz));
+        bField.push_back(Acts::Vector3(Bz, By, -Bx));
       }
 
   }
