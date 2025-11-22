@@ -82,8 +82,8 @@ ActsExamples::ProcessCode ActsExamples::TrackFittingAlgorithm::execute(
   }
 
   // Construct a perigee surface as the target surface
-  auto pSurface = Acts::Surface::makeShared<Acts::PerigeeSurface>(
-      Acts::Vector3{0., 0., 0.});
+//  auto pSurface = Acts::Surface::makeShared<Acts::PerigeeSurface>(
+//      Acts::Vector3{27056., 0., 0.});
 
   // Measurement calibrator must be instantiated here, because we need the
   // measurements to construct it. The other extensions are hold by the
@@ -91,9 +91,9 @@ ActsExamples::ProcessCode ActsExamples::TrackFittingAlgorithm::execute(
   ActsExamples::MeasurementCalibratorAdapter calibrator(*(m_cfg.calibrator),
                                                         measurements, clusters);
 
-  TrackFitterFunction::GeneralFitterOptions options{
-      ctx.geoContext, ctx.magFieldContext, ctx.calibContext, pSurface.get(),
-      Acts::PropagatorPlainOptions(ctx.geoContext, ctx.magFieldContext)};
+//  TrackFitterFunction::GeneralFitterOptions options{
+//      ctx.geoContext, ctx.magFieldContext, ctx.calibContext, pSurface.get(),
+//      Acts::PropagatorPlainOptions(ctx.geoContext, ctx.magFieldContext)};
 
   auto trackContainer = std::make_shared<Acts::VectorTrackContainer>();
   auto trackStateContainer = std::make_shared<Acts::VectorMultiTrajectory>();
@@ -136,6 +136,15 @@ ActsExamples::ProcessCode ActsExamples::TrackFittingAlgorithm::execute(
       IndexSourceLink sourceLink(measurement.geometryId(), measIndex);
       trackSourceLinks.push_back(Acts::SourceLink(sourceLink));
     }
+
+  // For each prototrack, use the position of the initial parameters to define
+  // the perigee. i.e, it should be set to the x position of the first measurement. 
+  auto pSurface = Acts::Surface::makeShared<Acts::PerigeeSurface>(
+      Acts::Vector3{initialParams.fourPosition(ctx.geoContext)[0], 0., 0.});
+
+  TrackFitterFunction::GeneralFitterOptions options{
+      ctx.geoContext, ctx.magFieldContext, ctx.calibContext, pSurface.get(),
+      Acts::PropagatorPlainOptions(ctx.geoContext, ctx.magFieldContext)};
 
     ACTS_VERBOSE("Invoke fitter for track " << itrack);
     auto result = (*m_cfg.fit)(trackSourceLinks, initialParams, options,
