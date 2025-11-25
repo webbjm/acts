@@ -94,6 +94,11 @@ Acts::Result<Acts::Vertex> Acts::FullBilloirVertexFitter::fit(
   // Initial guess of the 4D vertex position
   Vector4 linPoint = vertexingOptions.constraint.fullPosition();
   Vertex fittedVertex;
+  // Shift the initial guess away from {0,0,0} to the first measurement surface
+  const InputTrack& trackContainerInitial = paramVector[0];
+  const auto& trackParamsInitial = m_cfg.extractParameters(trackContainerInitial);
+  linPoint[0] = trackParamsInitial.fourPosition(vertexingOptions.geoContext)[0];
+
 
   for (int nIter = 0; nIter < m_cfg.maxIterations; ++nIter) {
     billoirTracks.clear();
