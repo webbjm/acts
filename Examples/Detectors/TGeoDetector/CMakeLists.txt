@@ -5,6 +5,7 @@ acts_add_library(
     src/ShipDetectorElement.cpp
     src/SiTargetBuilder.cpp
     src/StrawtubeBuilder.cpp
+    src/MTCBuilder.cpp
     src/TGeoDetector.cpp
     src/TGeoITkModuleSplitter.cpp
     ACTS_INCLUDE_FOLDER include/ActsExamples

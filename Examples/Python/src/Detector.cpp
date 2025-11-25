@@ -20,6 +20,7 @@
 #include "ActsExamples/GenericDetector/GenericDetector.hpp"
 #include "ActsExamples/TGeoDetector/TGeoDetector.hpp"
 #include "ActsExamples/TGeoDetector/SiTargetBuilder.hpp"
+#include "ActsExamples/TGeoDetector/MTCBuilder.hpp"
 #include "ActsExamples/TGeoDetector/StrawtubeBuilder.hpp"
 #include "ActsExamples/TelescopeDetector/TelescopeDetector.hpp"
 #include "ActsExamples/Utilities/Options.hpp"
@@ -171,6 +172,21 @@ void addDetector(Context& ctx) {
                  .def(py::init<const SiTargetBuilder::Config&>());
 
     auto c = py::class_<SiTargetBuilder::Config>(d, "Config").def(py::init<>());
+
+    ACTS_PYTHON_STRUCT(c, surfaceLogLevel, layerLogLevel, volumeLogLevel,
+                       fileName
+                       );
+
+    patchKwargsConstructor(c);
+
+  }
+
+  {
+    auto d = py::class_<MTCBuilder, Detector, std::shared_ptr<MTCBuilder>>(
+                 mex, "MTCBuilder")
+                 .def(py::init<const MTCBuilder::Config&>());
+
+    auto c = py::class_<MTCBuilder::Config>(d, "Config").def(py::init<>());
 
     ACTS_PYTHON_STRUCT(c, surfaceLogLevel, layerLogLevel, volumeLogLevel,
                        fileName
