@@ -23,6 +23,8 @@
 #include "ActsExamples/Io/Root/RootTrackStatesWriter.hpp"
 #include "ActsExamples/Io/Root/RootTrackSummaryWriter.hpp"
 #include "ActsExamples/Io/Root/RootVertexWriter.hpp"
+#include "ActsExamples/Io/Root/SHiPTrackWriter.hpp"
+#include "ActsExamples/Io/Root/SHiPVertexWriter.hpp"
 #include "ActsExamples/Io/Root/TrackFinderNTupleWriter.hpp"
 #include "ActsExamples/Io/Root/TrackFinderPerformanceWriter.hpp"
 #include "ActsExamples/Io/Root/TrackFitterPerformanceWriter.hpp"
@@ -210,7 +212,19 @@ void addRootOutput(Context& ctx) {
       inputSelectedParticles, inputTrackParticleMatching, bField, filePath,
       treeName, fileMode, vertexMatchThreshold, trackMatchThreshold,
       writeTrackInfo);
-
+  
+  ACTS_PYTHON_DECLARE_WRITER(
+      ActsExamples::SHiPTrackWriter, mex, "SHiPTrackWriter",
+      inputTracks, inputParticles, inputTrackParticleMatching, filePath,
+      treeName, fileMode, writeCovMat, writeGsfSpecific, writeGx2fSpecific);
+  /*
+  ACTS_PYTHON_DECLARE_WRITER(
+      ActsExamples::SHiPVertexWriter, mex, "SHiPVertexWriter",
+      inputVertices, inputTracks, inputTruthVertices, inputParticles,
+      inputSelectedParticles, inputTrackParticleMatching, bField, filePath,
+      treeName, fileMode, vertexMatchThreshold, trackMatchThreshold,
+      writeTrackInfo);
+  */
   ACTS_PYTHON_DECLARE_WRITER(
       ActsExamples::TrackFinderPerformanceWriter, mex,
       "TrackFinderPerformanceWriter", inputTracks, inputParticles,
