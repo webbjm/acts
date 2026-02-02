@@ -101,16 +101,16 @@ SHiPTrackWriter::SHiPTrackWriter(
   m_outputTree->Branch("t_p", &m_t_p);
 
   m_outputTree->Branch("hasFittedParams", &m_hasFittedParams);
-  m_outputTree->Branch("eLOC0_fit", &m_eLOC0_fit);
-  m_outputTree->Branch("eLOC1_fit", &m_eLOC1_fit);
-  m_outputTree->Branch("eLOC2_fit", &m_eLOC2_fit);
+  m_outputTree->Branch("x_fit", &m_eLOC0_fit);
+  m_outputTree->Branch("y_fit", &m_eLOC1_fit);
+  m_outputTree->Branch("z_fit", &m_eLOC2_fit);
   m_outputTree->Branch("ePHI_fit", &m_ePHI_fit);
   m_outputTree->Branch("eTHETA_fit", &m_eTHETA_fit);
   m_outputTree->Branch("eQOP_fit", &m_eQOP_fit);
   m_outputTree->Branch("eT_fit", &m_eT_fit);
-  m_outputTree->Branch("err_eLOC0_fit", &m_err_eLOC0_fit);
-  m_outputTree->Branch("err_eLOC1_fit", &m_err_eLOC1_fit);
-  m_outputTree->Branch("err_eLOC2_fit", &m_err_eLOC2_fit);
+  m_outputTree->Branch("err_x_fit", &m_err_eLOC0_fit);
+  m_outputTree->Branch("err_y_fit", &m_err_eLOC1_fit);
+  m_outputTree->Branch("err_z_fit", &m_err_eLOC2_fit);
   m_outputTree->Branch("err_ePHI_fit", &m_err_ePHI_fit);
   m_outputTree->Branch("err_eTHETA_fit", &m_err_eTHETA_fit);
   m_outputTree->Branch("err_eQOP_fit", &m_err_eQOP_fit);
@@ -372,10 +372,12 @@ ProcessCode SHiPTrackWriter::writeT(const AlgorithmContext& ctx,
       }
     }
 
+    auto trackParameters = track.parameters();
     //Translate local x/y into global coordinates
     Acts::Vector2 localPoint(param[Acts::eBoundLoc0],param[Acts::eBoundLoc1]);
     //Acts::Vector3 momentumVector = Acts::makeDirectionFromPhiTheta(param[Acts::eBoundPhi],param[Acts::eBoundTheta]);
-    Acts::Vector3 momentumVector(param[Acts::eBoundPhi],param[Acts::eBoundTheta],param[Acts::eBoundQOverP]);
+    Acts::Vector3 momentumVector = Acts::makeDirectionFromPhiTheta(trackParameters[Acts::eBoundPhi],trackParameters[Acts::eBoundTheta]);
+    //Acts::Vector3 momentumVector(param[Acts::eBoundPhi],param[Acts::eBoundTheta],param[Acts::eBoundQOverP]);
 
     auto localResult = pSurface->localToGlobal(ctx.geoContext, localPoint, momentumVector);
 
