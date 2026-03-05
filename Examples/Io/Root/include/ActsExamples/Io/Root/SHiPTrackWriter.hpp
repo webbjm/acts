@@ -160,8 +160,18 @@ class SHiPTrackWriter final : public WriterT<ConstTrackContainer> {
   std::vector<float> m_eLOC0_fit;
   /// Fitted parameters eBoundLoc1 of track
   std::vector<float> m_eLOC1_fit;
+  /// x-coordinate taken from reference surface
+  std::vector<float> m_x_fit;
+  /// y-coordinate taken from reference surface
+  std::vector<float> m_y_fit;
   /// z-coordinate taken from reference surface
-  std::vector<float> m_eLOC2_fit;
+  std::vector<float> m_z_fit;
+  /// px-coordinate taken from reference surface
+  std::vector<float> m_px_fit;
+  /// py-coordinate taken from reference surface
+  std::vector<float> m_py_fit;
+  /// pz-coordinate taken from reference surface
+  std::vector<float> m_pz_fit;
   /// Fitted parameters ePHI of track
   std::vector<float> m_ePHI_fit;
   /// Fitted parameters eTHETA of track
@@ -175,8 +185,18 @@ class SHiPTrackWriter final : public WriterT<ConstTrackContainer> {
   std::vector<float> m_err_eLOC0_fit;
   /// Fitted parameters eBoundLoc1 err of track
   std::vector<float> m_err_eLOC1_fit;
-  /// Fitted parameters eBoundLoc2 err of track
-  std::vector<float> m_err_eLOC2_fit;
+  /// Fitted parameters x err of track
+  std::vector<float> m_err_x_fit;
+  /// Fitted parameters y err of track
+  std::vector<float> m_err_y_fit;
+  /// Fitted parameters z err of track
+  std::vector<float> m_err_z_fit;
+  /// Fitted parameters px err of track
+  std::vector<float> m_err_px_fit;
+  /// Fitted parameters py err of track
+  std::vector<float> m_err_py_fit;
+  /// Fitted parameters pz err of track
+  std::vector<float> m_err_pz_fit;
   /// Fitted parameters ePHI err of track
   std::vector<float> m_err_ePHI_fit;
   /// Fitted parameters eTHETA err of track

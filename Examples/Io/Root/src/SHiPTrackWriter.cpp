@@ -101,16 +101,24 @@ SHiPTrackWriter::SHiPTrackWriter(
   m_outputTree->Branch("t_p", &m_t_p);
 
   m_outputTree->Branch("hasFittedParams", &m_hasFittedParams);
-  m_outputTree->Branch("x_fit", &m_eLOC0_fit);
-  m_outputTree->Branch("y_fit", &m_eLOC1_fit);
-  m_outputTree->Branch("z_fit", &m_eLOC2_fit);
+  m_outputTree->Branch("eLOC0_fit", &m_eLOC0_fit);
+  m_outputTree->Branch("eLOC1_fit", &m_eLOC1_fit);
+  m_outputTree->Branch("x_fit", &m_x_fit);
+  m_outputTree->Branch("y_fit", &m_y_fit);
+  m_outputTree->Branch("z_fit", &m_z_fit);
+  m_outputTree->Branch("px_fit", &m_px_fit);
+  m_outputTree->Branch("py_fit", &m_py_fit);
+  m_outputTree->Branch("pz_fit", &m_pz_fit);
   m_outputTree->Branch("ePHI_fit", &m_ePHI_fit);
   m_outputTree->Branch("eTHETA_fit", &m_eTHETA_fit);
   m_outputTree->Branch("eQOP_fit", &m_eQOP_fit);
   m_outputTree->Branch("eT_fit", &m_eT_fit);
-  m_outputTree->Branch("err_x_fit", &m_err_eLOC0_fit);
-  m_outputTree->Branch("err_y_fit", &m_err_eLOC1_fit);
-  m_outputTree->Branch("err_z_fit", &m_err_eLOC2_fit);
+  m_outputTree->Branch("err_x_fit", &m_err_x_fit);
+  m_outputTree->Branch("err_y_fit", &m_err_y_fit);
+  m_outputTree->Branch("err_z_fit", &m_err_z_fit);
+  m_outputTree->Branch("err_px_fit", &m_err_px_fit);
+  m_outputTree->Branch("err_py_fit", &m_err_py_fit);
+  m_outputTree->Branch("err_pz_fit", &m_err_pz_fit);
   m_outputTree->Branch("err_ePHI_fit", &m_err_ePHI_fit);
   m_outputTree->Branch("err_eTHETA_fit", &m_err_eTHETA_fit);
   m_outputTree->Branch("err_eQOP_fit", &m_err_eQOP_fit);
@@ -273,7 +281,6 @@ ProcessCode SHiPTrackWriter::writeT(const AlgorithmContext& ctx,
     // Get the perigee surface
     const Acts::Surface* pSurface =
         track.hasReferenceSurface() ? &track.referenceSurface() : nullptr;
-
     // Get the majority truth particle to this track
     auto match = trackParticleMatching.find(track.index());
     bool foundMajorityParticle = false;
@@ -342,12 +349,12 @@ ProcessCode SHiPTrackWriter::writeT(const AlgorithmContext& ctx,
     m_nMajorityHits.push_back(nMajorityHits);
     m_t_charge.push_back(t_charge);
     m_t_time.push_back(t_time);
-    m_t_vx.push_back(t_vx);
+    m_t_vx.push_back(-t_vz);
     m_t_vy.push_back(t_vy);
-    m_t_vz.push_back(t_vz);
-    m_t_px.push_back(t_px);
+    m_t_vz.push_back(t_vx);
+    m_t_px.push_back(-t_pz);
     m_t_py.push_back(t_py);
-    m_t_pz.push_back(t_pz);
+    m_t_pz.push_back(t_px);
     m_t_p.push_back(t_p);
 
     // Initialize the fitted track parameters info
@@ -355,7 +362,7 @@ ProcessCode SHiPTrackWriter::writeT(const AlgorithmContext& ctx,
                                                  NaNfloat, NaNfloat, NaNfloat};
     std::array<float, Acts::eBoundSize> error = {NaNfloat, NaNfloat, NaNfloat,
                                                  NaNfloat, NaNfloat, NaNfloat};
-
+    Acts::BoundVector bVector = Acts::BoundVector::Zero();
     // get entries of covariance matrix. If no entry, return NaN
     auto getCov = [&](auto i, auto j) { return track.covariance()(i, j); };
 
@@ -364,6 +371,7 @@ ProcessCode SHiPTrackWriter::writeT(const AlgorithmContext& ctx,
       const auto& parameter = track.parameters();
       for (unsigned int i = 0; i < Acts::eBoundSize; ++i) {
         param[i] = parameter[i];
+        bVector[i] = parameter[i];
       }
 
       for (unsigned int i = 0; i < Acts::eBoundSize; ++i) {
@@ -372,30 +380,47 @@ ProcessCode SHiPTrackWriter::writeT(const AlgorithmContext& ctx,
       }
     }
 
-    auto trackParameters = track.parameters();
-    //Translate local x/y into global coordinates
-    Acts::Vector2 localPoint(param[Acts::eBoundLoc0],param[Acts::eBoundLoc1]);
-    //Acts::Vector3 momentumVector = Acts::makeDirectionFromPhiTheta(param[Acts::eBoundPhi],param[Acts::eBoundTheta]);
-    Acts::Vector3 momentumVector = Acts::makeDirectionFromPhiTheta(trackParameters[Acts::eBoundPhi],trackParameters[Acts::eBoundTheta]);
-    //Acts::Vector3 momentumVector(param[Acts::eBoundPhi],param[Acts::eBoundTheta],param[Acts::eBoundQOverP]);
-
-    auto localResult = pSurface->localToGlobal(ctx.geoContext, localPoint, momentumVector);
-
-    auto refPos = pSurface->center(ctx.geoContext);
-
+    const Acts::Surface* ppSurface =
+        track.hasReferenceSurface() ? &track.referenceSurface() : nullptr;
+    auto freeParams = Acts::transformBoundToFreeParameters(*ppSurface, ctx.geoContext, track.parameters());
+    Acts::Vector3 pos(freeParams[Acts::eFreePos0],freeParams[Acts::eFreePos1],freeParams[Acts::eFreePos2]);
+    Acts::Vector3 dir(freeParams[Acts::eFreeDir0],freeParams[Acts::eFreeDir1],freeParams[Acts::eFreeDir2]);
+    //calculate covariance matrix for free parameters
+    auto jacobian = ppSurface->boundToFreeJacobian(ctx.geoContext, pos, dir);
+    auto freeCov = jacobian * track.covariance() * jacobian.transpose(); 
+                                                                         
     // Push the fitted track parameters.
     // Always push back even if no fitted track parameters
-    m_eLOC0_fit.push_back(refPos[2]); //X-coord
-    m_eLOC1_fit.push_back(localResult[1]); //Y
-    m_eLOC2_fit.push_back(-localResult[0]); //Z, which is inverted, due to rotation 
+    m_eLOC0_fit.push_back(param[Acts::eBoundLoc0]); //X-coord
+    m_eLOC1_fit.push_back(param[Acts::eBoundLoc1]); //Y
+    m_x_fit.push_back(-freeParams[Acts::eFreePos2]);
+    m_y_fit.push_back(freeParams[Acts::eFreePos1]); 
+    m_z_fit.push_back(freeParams[Acts::eFreePos0]);//Z, which is inverted, due to rotation
+                                                   
+    float px = -freeParams[Acts::eFreeDir2] * abs(1/param[Acts::eBoundQOverP]);
+    float py = freeParams[Acts::eFreeDir1] * abs(1/param[Acts::eBoundQOverP]);
+    float pz = freeParams[Acts::eFreeDir0] * abs(1/param[Acts::eBoundQOverP]);
+
+    m_px_fit.push_back(px);
+    m_py_fit.push_back(py); 
+    m_pz_fit.push_back(pz);
+
     m_ePHI_fit.push_back(param[Acts::eBoundPhi]);
     m_eTHETA_fit.push_back(param[Acts::eBoundTheta]);
     m_eQOP_fit.push_back(param[Acts::eBoundQOverP]);
     m_eT_fit.push_back(param[Acts::eBoundTime]);
 
-    m_err_eLOC0_fit.push_back(0.);
+
+    //Transform bound covariance matrix to catestian via jacobian matrix
+    //
+    m_err_eLOC0_fit.push_back(error[Acts::eBoundLoc0]);
     m_err_eLOC1_fit.push_back(error[Acts::eBoundLoc1]);
-    m_err_eLOC2_fit.push_back(error[Acts::eBoundLoc0]);
+    m_err_x_fit.push_back(error[Acts::eBoundLoc0]);
+    m_err_y_fit.push_back(error[Acts::eBoundLoc1]);
+    m_err_z_fit.push_back(0.); //Defined by surface position
+    m_err_px_fit.push_back(px * std::pow(std::pow(freeCov(6,6)/freeParams[Acts::eFreeQOverP],2) + std::pow(freeParams[Acts::eFreeDir2] * freeCov(7,7) / std::pow(freeParams[Acts::eFreeQOverP],2),2) + 2*freeCov(Acts::eFreeDir2,Acts::eFreeQOverP),1/2));
+    m_err_py_fit.push_back(py * std::pow(std::pow(freeCov(5,5)/freeParams[Acts::eFreeQOverP],2) + std::pow(freeParams[Acts::eFreeDir1] * freeCov(7,7) / std::pow(freeParams[Acts::eFreeQOverP],2),2) + 2*freeCov(Acts::eFreeDir1,Acts::eFreeQOverP),1/2));
+    m_err_pz_fit.push_back(pz * std::pow(std::pow(freeCov(4,4)/freeParams[Acts::eFreeQOverP],2) + std::pow(freeParams[Acts::eFreeDir0] * freeCov(7,7) / std::pow(freeParams[Acts::eFreeQOverP],2),2) + 2*freeCov(Acts::eFreeDir0,Acts::eFreeQOverP),1/2));
     m_err_ePHI_fit.push_back(error[Acts::eBoundPhi]);
     m_err_eTHETA_fit.push_back(error[Acts::eBoundTheta]);
     m_err_eQOP_fit.push_back(error[Acts::eBoundQOverP]);
@@ -512,14 +537,24 @@ ProcessCode SHiPTrackWriter::writeT(const AlgorithmContext& ctx,
   m_hasFittedParams.clear();
   m_eLOC0_fit.clear();
   m_eLOC1_fit.clear();
-  m_eLOC2_fit.clear();
+  m_x_fit.clear();
+  m_y_fit.clear();
+  m_z_fit.clear();
+  m_px_fit.clear();
+  m_py_fit.clear();
+  m_pz_fit.clear();
   m_ePHI_fit.clear();
   m_eTHETA_fit.clear();
   m_eQOP_fit.clear();
   m_eT_fit.clear();
   m_err_eLOC0_fit.clear();
   m_err_eLOC1_fit.clear();
-  m_err_eLOC2_fit.clear();
+  m_err_x_fit.clear();
+  m_err_y_fit.clear();
+  m_err_z_fit.clear();
+  m_err_px_fit.clear();
+  m_err_py_fit.clear();
+  m_err_pz_fit.clear();
   m_err_ePHI_fit.clear();
   m_err_eTHETA_fit.clear();
   m_err_eQOP_fit.clear();
