@@ -188,7 +188,7 @@ class InterpolatedBFieldMap : public InterpolatedMagneticField {
   ///
   /// @pre The given @c position must lie within the range of the underlying
   ///      magnetic field map.
-  Result<FieldCell> getFieldCell(const Vector3& position) const {
+  std::optional<FieldCell> getFieldCell(const Vector3& position) const {
     const auto& gridPosition = m_cfg.transformPos(position);
     const auto& indices = m_cfg.grid.localBinsFromPosition(gridPosition);
     const auto& lowerLeft = m_cfg.grid.lowerLeftBinEdge(indices);
@@ -200,7 +200,7 @@ class InterpolatedBFieldMap : public InterpolatedMagneticField {
     const auto& cornerIndices = m_cfg.grid.closestPointsIndices(gridPosition);
 
     if (!isInsideLocal(gridPosition)) {
-      return MagneticFieldError::OutOfBounds;
+      return std::nullopt;
     }
 
     std::size_t i = 0;
@@ -280,7 +280,7 @@ class InterpolatedBFieldMap : public InterpolatedMagneticField {
   Result<Vector3> getField(const Vector3& position) const {
     const auto gridPosition = m_cfg.transformPos(position);
     if (!isInsideLocal(gridPosition)) {
-      return Result<Vector3>::failure(MagneticFieldError::OutOfBounds);
+      return Result<Vector3>::success(Vector3::Zero());
     }
 
     return Result<Vector3>::success(
@@ -300,8 +300,9 @@ class InterpolatedBFieldMap : public InterpolatedMagneticField {
     const auto gridPosition = m_cfg.transformPos(position);
     if (!lcache.fieldCell || !(*lcache.fieldCell).isInside(gridPosition)) {
       auto res = getFieldCell(position);
-      if (!res.ok()) {
-        return Result<Vector3>::failure(res.error());
+      if (!res.has_value()) {
+       return Result<Vector3>::success(Vector3::Zero());
+
       }
       lcache.fieldCell = *res;
     }
