@@ -11,7 +11,9 @@
 #include "ActsExamples/Io/Root/RootAthenaNTupleReader.hpp"
 #include "ActsExamples/Io/Root/RootMaterialDecorator.hpp"
 #include "ActsExamples/Io/Root/RootMaterialTrackReader.hpp"
+#include "ActsExamples/Io/Root/RootSHiPParticleReader.hpp"
 #include "ActsExamples/Io/Root/RootParticleReader.hpp"
+#include "ActsExamples/Io/Root/RootParticleReader2.hpp"
 #include "ActsExamples/Io/Root/RootSimHitReader.hpp"
 #include "ActsExamples/Io/Root/RootTrackSummaryReader.hpp"
 #include "ActsExamples/Io/Root/RootVertexReader.hpp"
@@ -32,6 +34,14 @@ void addRootInput(Context& ctx) {
   ACTS_PYTHON_DECLARE_READER(ActsExamples::RootParticleReader, mex,
                              "RootParticleReader", outputParticles, treeName,
                              filePath);
+
+  ACTS_PYTHON_DECLARE_READER(ActsExamples::RootParticleReader2, mex,
+                             "RootParticleReader2", outputParticles, particleArr
+                             );
+
+//  ACTS_PYTHON_DECLARE_READER(ActsExamples::RootSHiPParticleReader, mex,
+//                             "RootSHiPParticleReader", outputParticles, treeName,
+//                             filePath);
 
   ACTS_PYTHON_DECLARE_READER(ActsExamples::RootVertexReader, mex,
                              "RootVertexReader", outputVertices, treeName,

@@ -24,6 +24,7 @@
 #include "ActsExamples/Io/Root/RootTrackSummaryWriter.hpp"
 #include "ActsExamples/Io/Root/RootVertexWriter.hpp"
 #include "ActsExamples/Io/Root/SHiPTrackWriter.hpp"
+#include "ActsExamples/Io/Root/SHiPTrackWriter2.hpp"
 #include "ActsExamples/Io/Root/SHiPVertexWriter.hpp"
 #include "ActsExamples/Io/Root/TrackFinderNTupleWriter.hpp"
 #include "ActsExamples/Io/Root/TrackFinderPerformanceWriter.hpp"
@@ -215,6 +216,11 @@ void addRootOutput(Context& ctx) {
   
   ACTS_PYTHON_DECLARE_WRITER(
       ActsExamples::SHiPTrackWriter, mex, "SHiPTrackWriter",
+      inputTracks, inputParticles, inputTrackParticleMatching, filePath,
+      treeName, fileMode, writeCovMat, writeGsfSpecific, writeGx2fSpecific);
+
+  ACTS_PYTHON_DECLARE_WRITER(
+      ActsExamples::SHiPTrackWriter2, mex, "SHiPTrackWriter2",
       inputTracks, inputParticles, inputTrackParticleMatching, filePath,
       treeName, fileMode, writeCovMat, writeGsfSpecific, writeGx2fSpecific);
   /*
