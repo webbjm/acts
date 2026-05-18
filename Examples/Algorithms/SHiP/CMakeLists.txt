@@ -7,6 +7,9 @@ acts_add_library(
     src/SHiPSeeder.cpp
     src/RecoTrack.cpp
     src/RecoVertex.cpp
+    src/StrawtubeBuilder.cpp
+    src/StrawtubeDetector.cpp
+    ACTS_INCLUDE_FOLDER include/ActsExamples
 )
 
 # This links the required ACTS components
@@ -14,10 +17,13 @@ target_link_libraries(
     ActsExamplesSHiP
     PUBLIC
         Acts::Core
-        ActsExamplesFramework
-        ActsExamplesDigitization
+        Acts::PluginRoot
+        Acts::ExamplesFramework
+        Acts::ExamplesDetectorsCommon
+        Acts::ExamplesDigitization
     PRIVATE 
         ROOT::Core
+        ROOT::Geom
 )
 
 # Crucial: Ensure the include directory is visible to other targets
