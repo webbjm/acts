@@ -5,6 +5,7 @@ acts_add_library(
     src/SeedToParams.cpp
     src/SHiPMeasurementProvider.cpp
     src/SHiPSeeder.cpp
+    src/SHiPDetectorElement.cpp
     src/RecoTrack.cpp
     src/RecoVertex.cpp
     src/StrawtubeBuilder.cpp
