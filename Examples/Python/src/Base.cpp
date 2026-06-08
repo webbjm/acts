@@ -331,6 +331,7 @@ void addAlgebra(Acts::Python::Context& ctx) {
 
   py::class_<Acts::Transform3>(m, "Transform3")
       .def(py::init<>())
+      .def(py::init<const Acts::Translation3&>())
       .def(py::init([](const Vector3& translation) -> Transform3 {
         return Transform3{Translation3{translation}};
       }))

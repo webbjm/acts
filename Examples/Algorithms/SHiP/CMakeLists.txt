@@ -2,6 +2,8 @@
 acts_add_library(
     ExamplesSHiP
     SHARED
+    src/HGCBuilder.cpp
+    src/HGCDetector.cpp
     src/SeedToParams.cpp
     src/SHiPMeasurementProvider.cpp
     src/SHiPSeeder.cpp

@@ -200,6 +200,20 @@ void addGeometry(Context& ctx) {
         .def_property_readonly(
             "geometryId", [](const Surface& self) { return self.geometryId(); })
         .def("center", &Surface::center)
+        .def("transform", [](const Acts::Surface& self, const Acts::GeometryContext& gctx) {
+            return self.transform(gctx); // Return by value to be safe
+        })
+       .def("localToGlobal",
+         [](const Acts::Surface& self, const Acts::GeometryContext& gctx,
+            const Acts::Vector2& lpos) {
+           // 1. Get the transform
+           auto transform = self.transform(gctx);
+           // 2. Convert Acts::Vector2 (loc0, loc1) to Acts::Vector3 (loc0, loc1, 0)
+           Acts::Vector3 local3(lpos[0], lpos[1], 0.0);
+           // 3. Perform the explicit transformation (Global = Trans * Local)
+           return transform * local3;
+         },
+         py::arg("gctx"), py::arg("lpos"))
         .def_property_readonly("type", &Surface::type)
         .def("visualize", &Surface::visualize)
         .def_property_readonly("surfaceMaterial",
@@ -249,6 +263,8 @@ void addGeometry(Context& ctx) {
                    self.visitSurfaces(func);
                  })
             .def("geoIdSurfaceMap", &Acts::TrackingGeometry::geoIdSurfaceMap)
+            .def("findSurface", &Acts::TrackingGeometry::findSurface,
+          py::return_value_policy::reference)
             .def("extractMaterialSurfaces",
                  [](Acts::TrackingGeometry& self) {
                    MaterialSurfaceSelector selector;
