@@ -17,10 +17,10 @@ public:
         double strawRes = 0.12;
         double strawRadius = 10.0;
         double scifiPitch = 1.0;
-        double siliconPitch = 0.075;
+        double siliconPitch = 0.0755;
         double scifiRes = 0.05;
         double siliconRes = 0.015;
-        double minBound = -125.0;
+        double minBound = -49.0; //Si module -49 -> 49 in x
         double noiseFloor = 0.0;
 
         std::shared_ptr<const Acts::TrackingGeometry> trackingGeometry;

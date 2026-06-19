@@ -5,6 +5,7 @@ acts_add_library(
     src/HGCBuilder.cpp
     src/HGCDetector.cpp
     src/SeedToParams.cpp
+    src/SHiPFieldProvider.cpp
     src/SHiPMeasurementProvider.cpp
     src/SHiPSeeder.cpp
     src/SHiPDetectorElement.cpp

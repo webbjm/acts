@@ -26,6 +26,7 @@ pybind11_add_module(ActsPythonBindings
   src/Navigation.cpp
   src/Generators.cpp
   src/Obj.cpp
+  src/SHiP.cpp
   src/TruthTracking.cpp
   src/TrackFitting.cpp
   src/TrackFinding.cpp
@@ -71,6 +72,7 @@ target_link_libraries(
         Acts::ExamplesDigitization
         Acts::ExamplesPropagation
         Acts::ExamplesMaterialMapping
+        Acts::ExamplesSHiP
 )
 
 set(py_files

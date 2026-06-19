@@ -14,6 +14,13 @@ class RecoTrack : public TObject {
   // Constructor from the track object (proxy) to get chi2 and nDoF
   RecoTrack(const ConstTrackProxy& track, const Acts::GeometryContext& gctx = Acts::GeometryContext());
 
+  RecoTrack(const Acts::BoundVector& parameters,
+            const Acts::BoundSquareMatrix& covariance,
+            const Acts::Surface& surface,
+            float chi2,
+            unsigned int nDoF,
+            const Acts::GeometryContext& gctx);
+
   /**  Destructor  **/
   ~RecoTrack() override;
 

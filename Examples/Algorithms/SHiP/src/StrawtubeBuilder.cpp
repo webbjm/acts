@@ -12,6 +12,9 @@
 #include "TGeoTube.h"
 #include "TGeoNode.h"
 #include <algorithm>
+#include "Acts/Geometry/ProtoLayer.hpp"     
+#include "Acts/Geometry/Extent.hpp"  
+#include "Acts/Utilities/AxisDefinitions.hpp"
 
 namespace ActsExamples {
 
@@ -21,41 +24,36 @@ StrawtubeBuilder::StrawtubeBuilder(const Config& cfg)
  if (gGeoManager == nullptr && !m_cfg.fileName.empty()) {
      TGeoManager::Import(m_cfg.fileName.c_str());
  }
- // 1. Define Straw Gas (Argon/CO2 - very low density)
+
  Acts::Material strawGas = Acts::Material::fromMassDensity(
      30000.0 * Acts::UnitConstants::mm, // X0
      50000.0 * Acts::UnitConstants::mm, // L0
      30.0, 15.0, 
      0.0018 * Acts::UnitConstants::g / Acts::UnitConstants::cm3);
  
- // 2. Define Straw Wall (Mylar/Aluminum)
  Acts::Material strawWall = Acts::Material::fromMassDensity(
      300.0 * Acts::UnitConstants::mm,
      400.0 * Acts::UnitConstants::mm,
      27.0, 13.0,
      1.4 * Acts::UnitConstants::g / Acts::UnitConstants::cm3);
  
- // 3. Create slabs
- // Thicknesses: 0.0036cm is standard for straw walls (in+out)
  Acts::MaterialSlab matGas(strawGas, 10.0 * Acts::UnitConstants::mm); 
  Acts::MaterialSlab matTube(strawWall, 0.0036 * Acts::UnitConstants::cm);
  
- // 4. Combine them
  Acts::MaterialSlab totalStraw = Acts::MaterialSlab::combineLayers(matTube, matGas);
  totalStraw = Acts::MaterialSlab::combineLayers(totalStraw, matTube);
  
- // 5. Use the result in your SurfaceMaterial
  auto surfaceMaterial = std::make_shared<Acts::HomogeneousSurfaceMaterial>(totalStraw);
 
- // 2. Extract and Sort straws
+ // Sort straws
  std::vector<StrawNode> allStraws;
  findStraws(gGeoManager->GetTopVolume(), Acts::Transform3::Identity(), allStraws);
  std::sort(allStraws.begin(), allStraws.end(), [](const auto& a, const auto& b) { return a.x < b.x; });
 
- // 3. Cluster by 1cm window
+ // Cluster by 1mm window
  std::vector<std::vector<StrawNode>> clusters;
  for (const auto& straw : allStraws) {
-     if (clusters.empty() || std::abs(straw.x - clusters.back().front().x) > 1.0 * Acts::UnitConstants::cm) {
+     if (clusters.empty() || std::abs(straw.x - clusters.back().front().x) > 1.0 * Acts::UnitConstants::mm) {
          clusters.push_back({straw});
      } else {
          clusters.back().push_back(straw);
@@ -95,9 +93,19 @@ StrawtubeBuilder::StrawtubeBuilder(const Config& cfg)
 
 
         Acts::ProtoLayer pl(context, surfaces);
-        pl.extent.set(Acts::AxisDirection::AxisX, stationX - 1.0, stationX + 1.0);    
+
+  
+    pl.extent.range(Acts::AxisDirection::AxisX).setMin(stationX - 1.0);
+    pl.extent.range(Acts::AxisDirection::AxisX).setMax(stationX + 1.0);
+   
+    pl.extent.range(Acts::AxisDirection::AxisY).setMin(-5000.0);
+    pl.extent.range(Acts::AxisDirection::AxisY).setMax(5000.0);
+   
+    pl.extent.range(Acts::AxisDirection::AxisZ).setMin(-5000.0);
+    pl.extent.range(Acts::AxisDirection::AxisZ).setMax(5000.0);
+
         Acts::Transform3 layerTransf = Acts::Transform3(Acts::Translation3(stationX, 0, 0));
-        auto layer = layerCreator->planeLayer(context, surfaces, 0, 0, Acts::AxisDirection::AxisX, pl, layerTransf);
+        auto layer = layerCreator->planeLayer(context, surfaces, 300, 1, Acts::AxisDirection::AxisX, pl, layerTransf);
         for (const auto& surf : surfaces) {
                         const_cast<Acts::Surface*>(surf.get())->associateLayer(*layer);
                     }
