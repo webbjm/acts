@@ -143,20 +143,20 @@ void addRootOutput(Context& ctx) {
                        rBounds, zBounds, rBins, zBins, phiBins);
   }
 
-  {
-    using Writer = ActsExamples::SHiPDigiRecoTrackWriter;
-    auto w = py::class_<Writer, IWriter, std::shared_ptr<Writer>>(
-                 mex, "SHiPDigiRecoTrackWriter")
-                 .def(py::init<const Writer::Config&, Acts::Logging::Level>(),
-                      py::arg("config"), py::arg("level"));
+//  {
+//    using Writer = ActsExamples::SHiPDigiRecoTrackWriter;
+//    auto w = py::class_<Writer, IWriter, std::shared_ptr<Writer>>(
+//                 mex, "SHiPDigiRecoTrackWriter")
+//                 .def(py::init<const Writer::Config&, Acts::Logging::Level>(),
+//                      py::arg("config"), py::arg("level"));
     //auto tt = py::class_<TTree,py::smart_holder>(w, "TTree", py::dynamic_attr()).def(py::init<>());
-    auto c = py::class_<Writer::Config>(w, "Config").def(py::init<>());
+//    auto c = py::class_<Writer::Config>(w, "Config").def(py::init<>());
 
-    ACTS_PYTHON_STRUCT(
-      c,
-      inputTracks, inputParticles, inputTrackParticleMatching, filePath, inputTree, inputVectors,
-      treeName, fileMode, writeCovMat, writeGsfSpecific, writeGx2fSpecific);
-  }
+//    ACTS_PYTHON_STRUCT(
+//      c,
+//      inputTracks, inputParticles, inputTrackParticleMatching, filePath, inputTree, inputVectors,
+//      treeName, fileMode, writeCovMat, writeGsfSpecific, writeGx2fSpecific);
+//  }
   /*
   {
     using Writer = ActsExamples::SHiPDigiRecoTrackWriter2;
