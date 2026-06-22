@@ -4,7 +4,6 @@ acts_add_library(
     src/AlignedTGeoDetectorElement.cpp
     src/ShipDetectorElement.cpp
     src/SiTargetBuilder.cpp
-    src/SNDBuilder.cpp
     #    src/StrawtubeBuilder.cpp
     src/MTCBuilder.cpp
     src/TGeoDetector.cpp
