@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
@@ -7,7 +8,6 @@
 #include <memory>
 #include <vector>
 #include <cmath>
-#include <algorithm>
 
 #include "Acts/EventData/Charge.hpp"
 #include "Acts/EventData/ParticleHypothesis.hpp"
