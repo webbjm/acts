@@ -23,9 +23,10 @@
 #include "ActsExamples/Io/Root/RootTrackStatesWriter.hpp"
 #include "ActsExamples/Io/Root/RootTrackSummaryWriter.hpp"
 #include "ActsExamples/Io/Root/RootVertexWriter.hpp"
-#include "ActsExamples/Io/Root/SHiPTrackWriter.hpp"
-#include "ActsExamples/Io/Root/SHiPTrackWriter2.hpp"
-#include "ActsExamples/Io/Root/SHiPVertexWriter.hpp"
+//#include "ActsExamples/Io/Root/SHiPTrackWriter.hpp"
+//#include "ActsExamples/Io/Root/SHiPDigiRecoTrackWriter.hpp"
+//#include "ActsExamples/Io/Root/SHiPDigiRecoTrackWriter2.hpp"
+//#include "ActsExamples/Io/Root/SHiPVertexWriter.hpp"
 #include "ActsExamples/Io/Root/TrackFinderNTupleWriter.hpp"
 #include "ActsExamples/Io/Root/TrackFinderPerformanceWriter.hpp"
 #include "ActsExamples/Io/Root/TrackFitterPerformanceWriter.hpp"
@@ -33,7 +34,11 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/stl_bind.h>
 #include <pybind11/stl/filesystem.h>
+//#include "ActsExamples/SHiPIo/RecoTrack.hpp"
+
+//PYBIND11_MAKE_OPAQUE(std::vector<ActsExamples::RecoTrack>);
 
 namespace Acts {
 class TrackingGeometry;
@@ -50,6 +55,7 @@ namespace py = pybind11;
 using namespace pybind11::literals;
 
 using namespace ActsExamples;
+
 
 namespace Acts::Python {
 
@@ -138,6 +144,48 @@ void addRootOutput(Context& ctx) {
   }
 
   {
+    using Writer = ActsExamples::SHiPDigiRecoTrackWriter;
+    auto w = py::class_<Writer, IWriter, std::shared_ptr<Writer>>(
+                 mex, "SHiPDigiRecoTrackWriter")
+                 .def(py::init<const Writer::Config&, Acts::Logging::Level>(),
+                      py::arg("config"), py::arg("level"));
+    //auto tt = py::class_<TTree,py::smart_holder>(w, "TTree", py::dynamic_attr()).def(py::init<>());
+    auto c = py::class_<Writer::Config>(w, "Config").def(py::init<>());
+
+    ACTS_PYTHON_STRUCT(
+      c,
+      inputTracks, inputParticles, inputTrackParticleMatching, filePath, inputTree, inputVectors,
+      treeName, fileMode, writeCovMat, writeGsfSpecific, writeGx2fSpecific);
+  }
+  /*
+  {
+    using Writer = ActsExamples::SHiPDigiRecoTrackWriter2;
+    // 1. Bind the RecoTrack class itself
+    py::class_<ActsExamples::RecoTrack>(mex, "RecoTrack")
+        .def(py::init<>())
+        .def(py::init<double>(), py::arg("x"))
+        .def("x", &ActsExamples::RecoTrack::x);
+
+   py::bind_vector<std::vector<ActsExamples::RecoTrack>>(mex, "RecoTrackVector")
+   .def("__int__", [](const std::vector<ActsExamples::RecoTrack>& v) {
+       return reinterpret_cast<std::uintptr_t>(&v);
+   });
+
+  // py::bind_vector<std::vector<ActsExamples::RecoTrack>>(mex, "RecoTrackVector");
+    auto w = py::class_<Writer, IWriter, std::shared_ptr<Writer>>(
+                 mex, "SHiPDigiRecoTrackWriter2")
+                 .def(py::init<const Writer::Config&, Acts::Logging::Level>(),
+                      py::arg("config"), py::arg("level"));
+    //auto tt = py::class_<TTree,py::smart_holder>(w, "TTree", py::dynamic_attr()).def(py::init<>());
+    auto c = py::class_<Writer::Config>(w, "Config").def(py::init<>());
+
+    ACTS_PYTHON_STRUCT(
+      c,
+      inputTracks, inputParticles, inputTrackParticleMatching, filePath, inputTree, outputVectors,
+      treeName, fileMode, writeCovMat, writeGsfSpecific, writeGx2fSpecific);
+  }
+*/
+  {
     using Writer = ActsExamples::RootMeasurementWriter;
     auto w = py::class_<Writer, IWriter, std::shared_ptr<Writer>>(
                  mex, "RootMeasurementWriter")
@@ -215,14 +263,14 @@ void addRootOutput(Context& ctx) {
       writeTrackInfo);
   
   ACTS_PYTHON_DECLARE_WRITER(
-      ActsExamples::SHiPTrackWriter, mex, "SHiPTrackWriter",
-      inputTracks, inputParticles, inputTrackParticleMatching, filePath,
-      treeName, fileMode, writeCovMat, writeGsfSpecific, writeGx2fSpecific);
+//      ActsExamples::SHiPTrackWriter, mex, "SHiPTrackWriter",
+//      inputTracks, inputParticles, inputTrackParticleMatching, filePath,
+//      treeName, fileMode, writeCovMat, writeGsfSpecific, writeGx2fSpecific);
 
-  ACTS_PYTHON_DECLARE_WRITER(
-      ActsExamples::SHiPTrackWriter2, mex, "SHiPTrackWriter2",
-      inputTracks, inputParticles, inputTrackParticleMatching, filePath,
-      treeName, fileMode, writeCovMat, writeGsfSpecific, writeGx2fSpecific);
+//  ACTS_PYTHON_DECLARE_WRITER(
+//      ActsExamples::SHiPDigiRecoTrackWriter, mex, "SHiPDigiRecoTrackWriter",
+//      inputTracks, inputParticles, inputTrackParticleMatching, filePath, inputTree,
+//      treeName, fileMode, writeCovMat, writeGsfSpecific, writeGx2fSpecific);
   /*
   ACTS_PYTHON_DECLARE_WRITER(
       ActsExamples::SHiPVertexWriter, mex, "SHiPVertexWriter",

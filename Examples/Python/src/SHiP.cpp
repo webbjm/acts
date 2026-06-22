@@ -52,7 +52,7 @@
 #include "ActsExamples/SHiP/RecoTrack.hpp"
 #include "ActsExamples/SHiP/RecoVertex.hpp"
 #include "ActsExamples/SHiP/SHiPFieldProvider.hpp"
-#include "ActsExamples/SHiP/SHiPFitterUtils.hpp"
+//#include "ActsExamples/SHiP/SHiPFitterUtils.hpp"
 #include "ActsExamples/SHiP/SHiPMeasurementProvider.hpp"
 #include "ActsExamples/SHiP/StrawtubeBuilder.hpp"
 #include "ActsExamples/SHiP/StrawtubeDetector.hpp"
