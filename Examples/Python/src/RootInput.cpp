@@ -13,12 +13,12 @@
 #include "ActsExamples/Io/Root/RootMaterialTrackReader.hpp"
 //#include "ActsExamples/Io/Root/RootSHiPParticleReader.hpp"
 #include "ActsExamples/Io/Root/RootParticleReader.hpp"
-#include "ActsExamples/Io/Root/RootParticleReader2.hpp"
+//#include "ActsExamples/Io/Root/RootParticleReader2.hpp"
 #include "ActsExamples/Io/Root/RootSimHitReader.hpp"
-#include "ActsExamples/Io/Root/RootSimHitReader2.hpp"
+//#include "ActsExamples/Io/Root/RootSimHitReader2.hpp"
 #include "ActsExamples/Io/Root/RootTrackSummaryReader.hpp"
 #include "ActsExamples/Io/Root/RootVertexReader.hpp"
-#include "ActsExamples/Io/Root/RootVertexReader2.hpp"
+//#include "ActsExamples/Io/Root/RootVertexReader2.hpp"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -37,9 +37,9 @@ void addRootInput(Context& ctx) {
                              "RootParticleReader", outputParticles, treeName,
                              filePath);
 
-  ACTS_PYTHON_DECLARE_READER(ActsExamples::RootParticleReader2, mex,
-                             "RootParticleReader2", outputParticles, particleArr
-                             );
+//  ACTS_PYTHON_DECLARE_READER(ActsExamples::RootParticleReader2, mex,
+//                             "RootParticleReader2", outputParticles, particleArr
+//                             );
 
 //  ACTS_PYTHON_DECLARE_READER(ActsExamples::RootSHiPParticleReader, mex,
 //                             "RootSHiPParticleReader", outputParticles, treeName,
@@ -48,9 +48,9 @@ void addRootInput(Context& ctx) {
   ACTS_PYTHON_DECLARE_READER(ActsExamples::RootVertexReader, mex,
                              "RootVertexReader", outputVertices, treeName,
                              filePath);
-  ACTS_PYTHON_DECLARE_READER(ActsExamples::RootVertexReader2, mex,
-                             "RootVertexReader2", outputVertices, treeName,
-                             filePath, vertexMap);
+//  ACTS_PYTHON_DECLARE_READER(ActsExamples::RootVertexReader2, mex,
+//                             "RootVertexReader2", outputVertices, treeName,
+//                             filePath, vertexMap);
 
   ACTS_PYTHON_DECLARE_READER(ActsExamples::RootMaterialTrackReader, mex,
                              "RootMaterialTrackReader", outputMaterialTracks,
@@ -85,9 +85,9 @@ void addRootInput(Context& ctx) {
                              "RootSimHitReader", treeName, filePath,
                              outputSimHits);
 
-  ACTS_PYTHON_DECLARE_READER(ActsExamples::RootSimHitReader2, mex,
-                             "RootSimHitReader2", hitArr,
-                             outputSimHits);
+//  ACTS_PYTHON_DECLARE_READER(ActsExamples::RootSimHitReader2, mex,
+//                             "RootSimHitReader2", hitArr,
+//                             outputSimHits);
 
   {
     auto rmd =
