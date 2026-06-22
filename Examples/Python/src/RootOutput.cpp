@@ -262,7 +262,7 @@ void addRootOutput(Context& ctx) {
       treeName, fileMode, vertexMatchThreshold, trackMatchThreshold,
       writeTrackInfo);
   
-  ACTS_PYTHON_DECLARE_WRITER(
+//  ACTS_PYTHON_DECLARE_WRITER(
 //      ActsExamples::SHiPTrackWriter, mex, "SHiPTrackWriter",
 //      inputTracks, inputParticles, inputTrackParticleMatching, filePath,
 //      treeName, fileMode, writeCovMat, writeGsfSpecific, writeGx2fSpecific);
