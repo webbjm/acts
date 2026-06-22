@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 #include <cmath>
+#include <algorithm>
 
 #include "Acts/EventData/Charge.hpp"
 #include "Acts/EventData/ParticleHypothesis.hpp"
