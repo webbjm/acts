@@ -391,7 +391,7 @@ void addSHiP(Context& ctx) {
         navCfg.resolveSensitive = true;
     
         Acts::Navigator navigator(navCfg, Acts::getDefaultLogger("Navigator", Acts::Logging::INFO));
-        auto logger = Acts::getDefaultLogger("KalmanFitter", Acts::Logging::VERBOSE);
+        auto logger = Acts::getDefaultLogger("KalmanFitter", Acts::Logging::INFO);
 
         Acts::DirectNavigator navigator2;
 

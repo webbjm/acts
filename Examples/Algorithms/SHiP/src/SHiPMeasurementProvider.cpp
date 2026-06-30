@@ -49,7 +49,7 @@ MeasurementContainer SHiPMeasurementProvider::process(
             for (auto* h : hits) {
                 DigitizedParameters d;
                 d.indices = {Acts::eBoundLoc0};
-                std::cout<<"Debug: drift distance "<<(*h)[11]*10<<std::endl;
+//                std::cout<<"Debug: drift distance "<<(*h)[11]*10<<std::endl;
                 double sign = 1.0;
                 if (h->size() > 16) {
                     sign = (*h)[16];
@@ -86,8 +86,8 @@ MeasurementContainer SHiPMeasurementProvider::process(
                     double localX = (avgStrip - center_strip) * pitch;
 //                    std::cout<<avgStrip<<std::endl;
 //                    std::cout<<avgStrip-center_strip<<std::endl;
-                    std::cout<<"Geometry in ACTS: "<<surfaceId.layer()<<" "<<surfaceId.sensitive()<<std::endl;
-                    std::cout<<"Cluster: x-local, size, strip num "<<localX<<" "<<cluster.size()<<" "<<avgStrip<<std::endl;
+//                    std::cout<<"Geometry in ACTS: "<<surfaceId.layer()<<" "<<surfaceId.sensitive()<<std::endl;
+//                    std::cout<<"Cluster: x-local, size, strip num "<<localX<<" "<<cluster.size()<<" "<<avgStrip<<std::endl;
 
                     DigitizedParameters d;
                     d.indices = {Acts::eBoundLoc0};
