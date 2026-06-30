@@ -60,7 +60,7 @@ void addUtilities(Context& ctx);
 
 void addRootInput(Context& ctx);
 void addRootOutput(Context& ctx);
-
+void addSHiP(Context& ctx);
 // Plugins
 void addDigitization(Context& ctx);
 void addPythia8(Context& ctx);
@@ -153,4 +153,5 @@ PYBIND11_MODULE(ActsPythonBindings, m) {
 
   addRootInput(ctx);
   addRootOutput(ctx);
+  addSHiP(ctx);
 }
