@@ -187,8 +187,9 @@ void addSHiP(Context& ctx) {
     }, py::arg("bField"), py::arg("x"), py::arg("y"), py::arg("z"));
 
     m.def("fitVertex", [](const std::vector<ActsExamples::TrackContainer::ConstTrackProxy>& proxies,
-                          std::shared_ptr<const Acts::MagneticFieldProvider> bField) {
-        Acts::GeometryContext geoCtx;
+                       std::shared_ptr<const Acts::MagneticFieldProvider> bField,
+                       const Acts::GeometryContext& geoCtx, 
+                       [[maybe_unused]] const Acts::TrackingGeometry& trackingGeometry) {
         Acts::MagneticFieldContext magCtx;
         Acts::SquareMatrix3 A = Acts::SquareMatrix3::Zero();
         Acts::Vector3 b = Acts::Vector3::Zero();
@@ -219,6 +220,12 @@ void addSHiP(Context& ctx) {
         }
      
         Acts::Vector3 seedPos = A.colPivHouseholderQr().solve(b);
+        // Safe-guard against extreme spatial seeds or NaN edge-cases
+        if (std::isnan(seedPos.x()) || seedPos.x() < 20000.0 || seedPos.x() > 90000.0) {
+            if (!proxies.empty()) {
+                seedPos = proxies.front().referenceSurface().center(geoCtx);
+            }
+        }
         Acts::Vertex seedVertex(seedPos);
         Acts::SquareMatrix4 seedCov = Acts::SquareMatrix4::Identity() * 1000000.0;
         seedVertex.setFullCovariance(seedCov);
@@ -257,10 +264,11 @@ void addSHiP(Context& ctx) {
            vertexContainer.push_back(result.value());
         } else {
            std::cout << "DEBUG: Vertex Fit failed! Error: " << result.error().message()
-                     << " at Seed Z: " << seedPos.z() << std::endl;
+                     << " at Seed X: " << seedPos.x() << std::endl;
         }
         return vertexContainer;
-    }, py::arg("proxies"), py::arg("bField"));
+    }, py::arg("proxies"), py::arg("bField"), py::arg("geoCtx"), py::arg("trackingGeometry"));
+
 
     py::class_<ActsExamples::RecoVertex>(m, "RecoVertex")
         .def(py::init<const Acts::Vertex&>())
