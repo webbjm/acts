@@ -113,6 +113,32 @@ void addSHiP(Context& ctx) {
         }
     }, py::arg("propagator"), py::arg("start"), py::arg("target"), py::arg("geoCtx"), py::arg("magCtx"));
 
+    m.def("extrapolateTrackToZ", [](const ActsExamples::RecoTrack& track, double targetZ_ship) -> py::tuple {
+        double px = track.px();
+        double py = track.py();
+        double pz = track.pz();
+
+        if (std::abs(pz) < 1e-10) {
+            return py::make_tuple(false, py::none(), py::make_tuple(0.0, 0.0, 0.0));
+        }
+
+        double track_x = track.x();
+        double track_y = track.y();
+        double track_z = track.z();
+
+        double lambda = (targetZ_ship - track_z) / pz;
+
+        double final_x = track_x + lambda * px;
+        double final_y = track_y + lambda * py;
+        double final_z = targetZ_ship;
+
+        return py::make_tuple(
+            true, 
+            py::make_tuple(final_x, final_y, final_z),
+            py::make_tuple(px, py, pz)
+        );
+    }, py::arg("track"), py::arg("targetZ_ship"));
+
 
     py::class_<ActsExamples::RecoTrack, std::shared_ptr<ActsExamples::RecoTrack>>(mex, "RecoTrack")
         .def(py::init<>())
@@ -360,7 +386,13 @@ void addSHiP(Context& ctx) {
         .def_property_readonly("z", &ActsExamples::RecoVertex::z)
         .def_property_readonly("chi2", &ActsExamples::RecoVertex::chi2)
         .def_property_readonly("ndof", &ActsExamples::RecoVertex::nDoF)
-        .def("trackIds", &ActsExamples::RecoVertex::trackIds);
+        .def("trackIds", &ActsExamples::RecoVertex::trackIds)
+        .def("trackPx", &ActsExamples::RecoVertex::trackPx)
+        .def("trackPy", &ActsExamples::RecoVertex::trackPy)
+        .def("trackPz", &ActsExamples::RecoVertex::trackPz)
+        .def("trackX", &ActsExamples::RecoVertex::trackX)
+        .def("trackY", &ActsExamples::RecoVertex::trackY)
+        .def("trackZ", &ActsExamples::RecoVertex::trackZ);
 
 
     m.def("pushRecoVertex", [](long vectorAddr,

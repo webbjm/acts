@@ -31,12 +31,26 @@ class RecoVertex : public TObject {
   void addTrackId(Int_t id) { m_trackIds.push_back(id); }
   const std::vector<Int_t>& trackIds() const { return m_trackIds; }
 
+  const std::vector<Double_t>& trackPx() const { return m_trackPx; }
+  const std::vector<Double_t>& trackPy() const { return m_trackPy; }
+  const std::vector<Double_t>& trackPz() const { return m_trackPz; }
+  const std::vector<Double_t>& trackX() const { return m_trackX; }
+  const std::vector<Double_t>& trackY() const { return m_trackY; }
+  const std::vector<Double_t>& trackZ() const { return m_trackZ; }
+
  private:
   Double_t m_x{0.}, m_y{0.}, m_z{0.}, m_t{0.};
   Double_t m_err_x{0.}, m_err_y{0.}, m_err_z{0.}, m_err_t{0.};
   Double_t m_chi2{0.}, m_nDoF{0.};
 
   std::vector<Int_t> m_trackIds;
+
+  std::vector<Double_t> m_trackPx;
+  std::vector<Double_t> m_trackPy;
+  std::vector<Double_t> m_trackPz;
+  std::vector<Double_t> m_trackX;
+  std::vector<Double_t> m_trackY;
+  std::vector<Double_t> m_trackZ;
 
   ClassDef(RecoVertex, 1);
 };
