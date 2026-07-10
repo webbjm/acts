@@ -200,10 +200,10 @@ void addSHiP(Context& ctx) {
                         double smoothed_loc0 = state.smoothed()(Acts::eBoundLoc0);
                         double smoothed_err  = state.smoothedCovariance()(Acts::eBoundLoc0, Acts::eBoundLoc0);
 
-                        double res_val = (meas_loc0 - smoothed_loc0) * 0.1; //Scale up to cm units
-                        double res_cov = (meas_err - smoothed_err) * 0.1;
+                        double res_val = (meas_loc0 - smoothed_loc0); //Scale up to cm units
+                        double res_cov = (meas_err - smoothed_err);
 
-                        residuals.push_back(res_val);
+                        residuals.push_back(res_val * 0.1);
 
                         if (res_cov > 1e-9) {
                             pulls.push_back(res_val / std::sqrt(res_cov));
@@ -230,8 +230,8 @@ void addSHiP(Context& ctx) {
                     pulls.clear();
                     for (unsigned int i = 0; i < nMeasurements; ++i) {
                         double res_val = params(Acts::eBoundLoc0);
-                        residuals.push_back(res_val);
-                        pulls.push_back(res_val / 0.12);
+                        residuals.push_back(res_val * 10);
+                        pulls.push_back(res_val / 0.012);
                     }
                 }
 
