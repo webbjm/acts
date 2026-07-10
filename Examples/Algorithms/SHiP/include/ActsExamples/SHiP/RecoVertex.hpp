@@ -1,8 +1,9 @@
-#pragma once
+#ifndef ACTSEXAMPLES_SHIP_RECOVERTEX_HPP
+#define ACTSEXAMPLES_SHIP_RECOVERTEX_HPP
 
-#include "Rtypes.h"            // for Double_t, Int_t, Double32_t, etc
-#include "TObject.h"           // for TObject
-#include "Acts/Vertexing/Vertex.hpp" // Required for Acts::Vertex
+#include "Rtypes.h"
+#include "TObject.h"
+#include "Acts/Vertexing/Vertex.hpp"
 #include <vector>
 
 namespace ActsExamples {
@@ -26,6 +27,8 @@ class RecoVertex : public TObject {
   Double_t chi2() const { return m_chi2; }
   Double_t nDoF() const { return m_nDoF; }
 
+  void clearTrackIds() { m_trackIds.clear(); }
+  void addTrackId(Int_t id) { m_trackIds.push_back(id); }
   const std::vector<Int_t>& trackIds() const { return m_trackIds; }
 
  private:
@@ -39,3 +42,6 @@ class RecoVertex : public TObject {
 };
 
 } // namespace ActsExamples
+
+#endif // ACTSEXAMPLES_SHIP_RECOVERTEX_HPP
+

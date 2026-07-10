@@ -63,26 +63,7 @@ namespace ActsExamples {
 
 namespace py = pybind11;
 
-static std::shared_ptr<ActsExamples::RecoTrack> makeRecoTrackImpl(
-    py::object trackObj,
-    const Acts::GeometryContext& gctx) {
 
-    using IteratorProxy = Acts::TrackProxy<Acts::VectorTrackContainer, Acts::VectorMultiTrajectory, std::shared_ptr, true>;
-    const auto& track = trackObj.cast<const IteratorProxy&>();
-
-    if (!track.hasReferenceSurface()) {
-        return std::make_shared<ActsExamples::RecoTrack>();
-    }
-    
-    return std::make_shared<ActsExamples::RecoTrack>(
-        track.parameters(),
-        track.covariance(),
-        track.referenceSurface(),
-        track.chi2(),
-        track.nDoF(),
-        gctx
-    );
-}
 } // namespace ActsExamples
 
 PYBIND11_MAKE_OPAQUE(std::vector<ActsExamples::IndexSourceLink>);
@@ -132,36 +113,123 @@ void addSHiP(Context& ctx) {
         }
     }, py::arg("propagator"), py::arg("start"), py::arg("target"), py::arg("geoCtx"), py::arg("magCtx"));
 
-    mex.def("makeRecoTrack", &makeRecoTrackImpl,
-            py::arg("track"),
-            py::arg("gctx") = Acts::GeometryContext());
 
     py::class_<ActsExamples::RecoTrack, std::shared_ptr<ActsExamples::RecoTrack>>(mex, "RecoTrack")
-            .def(py::init<>());
+        .def(py::init<>())
+        .def_static("makeRecoTrack", [](py::object trackObj, const Acts::GeometryContext& gctx) {
+            using IteratorProxy = Acts::TrackProxy<Acts::VectorTrackContainer, Acts::VectorMultiTrajectory, std::shared_ptr, true>;
+            const auto& track = trackObj.cast<const IteratorProxy&>();
 
-    m.def("pushRecoTrack", [](long vectorAddr, py::object trackObj, const Acts::GeometryContext& gctx) {
-        auto* container = reinterpret_cast<std::vector<ActsExamples::RecoTrack>*>(vectorAddr);
+            if (!track.hasReferenceSurface()) {
+                return std::make_shared<ActsExamples::RecoTrack>();
+            }
+
+            return std::make_shared<ActsExamples::RecoTrack>(
+                ActsExamples::RecoTrack::FromActsProxy(track, gctx)
+            );
+        }, py::arg("track"), py::arg("gctx") = Acts::GeometryContext());
+
+    mex.def("pushRecoTrack", [](long vectorAddress, py::object trackObj, const Acts::GeometryContext& gctx) {
+        auto* container = reinterpret_cast<std::vector<ActsExamples::RecoTrack>*>(vectorAddress);
         if (!container) {
             throw std::runtime_error("CRITICAL: Null vector pointer provided!");
         }
+
         using ProxyType = ActsExamples::TrackContainer::ConstTrackProxy;
         const auto& track = trackObj.cast<const ProxyType&>();
+
         if (track.hasReferenceSurface()) {
-            double chi2 = track.chi2();
-            unsigned int ndof = track.nDoF();
-            if (ndof > 1000) {
-                 std::cout << "DEBUG: Detected junk nDoF: " << ndof << ". Re-aligning proxy..." << std::endl;
+            if (track.nMeasurements() == 0) {
+                return;
             }
-            container->emplace_back(
-                track.parameters(),
-                track.covariance(),
-                track.referenceSurface(),
-                chi2,
-                ndof,
-                gctx
-            );
+
+            try {
+                auto params = track.parameters();
+                auto cov = track.covariance();
+                const auto& surface = track.referenceSurface();
+                float chi2 = static_cast<float>(track.chi2());
+                unsigned int ndof = track.nDoF();
+                unsigned int nMeasurements = track.nMeasurements();
+
+                std::vector<Double_t> residuals;
+                std::vector<Double_t> pulls;
+                residuals.reserve(nMeasurements);
+                pulls.reserve(nMeasurements);
+
+                bool states_parsed = false;
+
+                try {
+                    const auto& multitrajectory = track.container().trackStateContainer();
+                    auto tipIndex = track.tipIndex();
+
+                    unsigned int true_states_found = 0;
+
+                    multitrajectory.visitBackwards(tipIndex, [&](const auto& state) {
+                        if (!state.hasUncalibratedSourceLink() || !state.hasCalibrated() || !state.hasSmoothed()) {
+                            return true;
+                        }
+                        double meas_loc0 = state.template calibrated<1>()(0);
+                        double meas_err  = state.template calibratedCovariance<1>()(0, 0);
+
+                        double smoothed_loc0 = state.smoothed()(Acts::eBoundLoc0);
+                        double smoothed_err  = state.smoothedCovariance()(Acts::eBoundLoc0, Acts::eBoundLoc0);
+
+                        double res_val = (meas_loc0 - smoothed_loc0) * 0.1; //Scale up to cm units
+                        double res_cov = (meas_err - smoothed_err) * 0.1;
+
+                        residuals.push_back(res_val);
+
+                        if (res_cov > 1e-9) {
+                            pulls.push_back(res_val / std::sqrt(res_cov));
+                        } else {
+                            pulls.push_back(meas_err > 0.0 ? (res_val / std::sqrt(meas_err)) : 0.0);
+                        }
+
+                        true_states_found++;
+                        return true;
+                    });
+
+                    if (true_states_found > 0) {
+                        states_parsed = true;
+                        std::reverse(residuals.begin(), residuals.end());
+                        std::reverse(pulls.begin(), pulls.end());
+                    }
+                }
+                catch (...) {
+                    states_parsed = false;
+                }
+
+                if (!states_parsed) {
+                    residuals.clear();
+                    pulls.clear();
+                    for (unsigned int i = 0; i < nMeasurements; ++i) {
+                        double res_val = params(Acts::eBoundLoc0);
+                        residuals.push_back(res_val);
+                        pulls.push_back(res_val / 0.12);
+                    }
+                }
+
+                container->emplace_back(
+                    params,
+                    cov,
+                    surface,
+                    chi2,
+                    ndof,
+                    gctx,
+                    residuals,
+                    pulls,
+                    residuals.size()
+                );
+
+            }
+            catch (const std::exception& e) {
+                std::cout << "WARNING: Corrupt track discarded: " << e.what() << std::endl;
+                return;
+            }
         }
-    }, py::arg("vectorAddr"), py::arg("track"), py::arg("gctx") = Acts::GeometryContext());
+    }, py::arg("vectorAddress"), py::arg("trackObj"), py::arg("gctx"));
+
+
 
     m.def("getSurface", [](std::shared_ptr<const Acts::TrackingGeometry> geometry, 
                            Acts::GeometryIdentifier geoId) {
@@ -264,11 +332,26 @@ void addSHiP(Context& ctx) {
            vertexContainer.push_back(result.value());
         } else {
            std::cout << "DEBUG: Vertex Fit failed! Error: " << result.error().message()
-                     << " at Seed X: " << seedPos.x() << std::endl;
+                     << " at Seed Z (SHiP frame): " << seedPos.x() << std::endl;
         }
         return vertexContainer;
     }, py::arg("proxies"), py::arg("bField"), py::arg("geoCtx"), py::arg("trackingGeometry"));
 
+
+    py::class_<Acts::Vertex>(m, "Vertex")
+        .def(py::init<>())
+        .def("position", [](const Acts::Vertex& vtx) -> Acts::Vector3 {
+            return vtx.position();
+        })
+        .def("fullPosition", [](const Acts::Vertex& vtx) -> Acts::Vector4 {
+            return vtx.fullPosition();
+        })
+        .def("covariance", [](const Acts::Vertex& vtx) -> Acts::SquareMatrix3 {
+            return vtx.covariance();
+        })
+        .def("fullCovariance", [](const Acts::Vertex& vtx) -> Acts::SquareMatrix4 {
+            return vtx.fullCovariance();
+        });
 
     py::class_<ActsExamples::RecoVertex>(m, "RecoVertex")
         .def(py::init<const Acts::Vertex&>())
@@ -278,18 +361,45 @@ void addSHiP(Context& ctx) {
         .def_property_readonly("chi2", &ActsExamples::RecoVertex::chi2)
         .def_property_readonly("ndof", &ActsExamples::RecoVertex::nDoF)
         .def("trackIds", &ActsExamples::RecoVertex::trackIds);
-   
-    m.def("pushRecoVertex", [](long vectorAddr, const Acts::Vertex& vtx) {
-        auto* vertexVector = reinterpret_cast<std::vector<ActsExamples::RecoVertex>*>(vectorAddr);
-        vertexVector->emplace_back(vtx);
-    });
 
-    py::class_<Acts::Vertex>(m, "Vertex")
-        .def(py::init<>())
-        .def("position", (const Acts::Vector3& (Acts::Vertex::*)() const) &Acts::Vertex::position)
-        .def("fullPosition", (const Acts::Vector4& (Acts::Vertex::*)() const) &Acts::Vertex::fullPosition)
-        .def("covariance", (const Acts::SquareMatrix3& (Acts::Vertex::*)() const) &Acts::Vertex::covariance)
-        .def("fullCovariance", (const Acts::SquareMatrix4& (Acts::Vertex::*)() const) &Acts::Vertex::fullCovariance);
+
+    m.def("pushRecoVertex", [](long vectorAddr,
+                               const Acts::Vertex& vtx,
+                               const ActsExamples::TrackContainer& outputTracks) {
+
+       auto* vertexVector = reinterpret_cast<std::vector<ActsExamples::RecoVertex>*>(vectorAddr);
+       if (!vertexVector) {
+           throw std::runtime_error("CRITICAL: Null vertex vector pointer provided!");
+       }
+
+       ActsExamples::RecoVertex recoVtx(vtx);
+       recoVtx.clearTrackIds();
+
+       for (size_t trk_idx = 0; trk_idx < vtx.tracks().size(); ++trk_idx) {
+
+           Acts::Vector3 vtxTrackMom = vtx.tracks()[trk_idx].fittedParams.momentum();
+
+           int matched_index = -1;
+           for (size_t i = 0; i < outputTracks.size(); ++i) {
+               const auto& trackProxy = outputTracks.getTrack(i);
+
+               Acts::Vector3 trackMom = trackProxy.momentum();
+
+               double deltaNorm = (trackMom - vtxTrackMom).norm();
+               if (deltaNorm < 1e-3) { // 1 MeV/c tolerance window for numerical float precision
+                   matched_index = static_cast<int>(i);
+                   break;
+               }
+           }
+
+           if (matched_index != -1) {
+               recoVtx.addTrackId(matched_index);
+           }
+       }
+
+       vertexVector->push_back(std::move(recoVtx));
+
+    }, py::arg("vectorAddr"), py::arg("vtx"), py::arg("outputTracks"));
 
     m.def("getTrackResiduals", [](const ActsExamples::ConstTrackProxy& track) {
         std::vector<double> residuals;
