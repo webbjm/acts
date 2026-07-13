@@ -230,7 +230,7 @@ void addSHiP(Context& ctx) {
                     pulls.clear();
                     for (unsigned int i = 0; i < nMeasurements; ++i) {
                         double res_val = params(Acts::eBoundLoc0);
-                        residuals.push_back(res_val * 10);
+                        residuals.push_back(res_val * 0.1);
                         pulls.push_back(res_val / 0.012);
                     }
                 }
