@@ -53,7 +53,6 @@
 #include "ActsExamples/SHiP/RecoTrack.hpp"
 #include "ActsExamples/SHiP/RecoVertex.hpp"
 #include "ActsExamples/SHiP/SHiPFieldProvider.hpp"
-//#include "ActsExamples/SHiP/SHiPFitterUtils.hpp"
 #include "ActsExamples/SHiP/SHiPMeasurementProvider.hpp"
 #include "ActsExamples/SHiP/StrawtubeBuilder.hpp"
 #include "ActsExamples/SHiP/StrawtubeDetector.hpp"
@@ -66,7 +65,6 @@ namespace py = pybind11;
 
 } // namespace ActsExamples
 
-//PYBIND11_MAKE_OPAQUE(std::vector<ActsExamples::IndexSourceLink>);
 
 namespace ActsPython {
     void addSHiP(pybind11::module& mex) {
@@ -144,170 +142,16 @@ namespace ActsPython {
 
     py::class_<ActsExamples::RecoTrack, std::shared_ptr<ActsExamples::RecoTrack>>(mex, "RecoTrack")
         .def(py::init<>());
-        /*
-        .def_static("makeRecoTrack", [](py::object trackObj, const Acts::GeometryContext& gctx) {
-            using IteratorProxy = Acts::TrackProxy<Acts::VectorTrackContainer, Acts::VectorMultiTrajectory, std::shared_ptr, true>;
-            const auto& track = trackObj.cast<const IteratorProxy&>();
 
-            if (!track.hasReferenceSurface()) {
-                return std::make_shared<ActsExamples::RecoTrack>();
-            }
-
-            return std::make_shared<ActsExamples::RecoTrack>(
-                ActsExamples::RecoTrack::FromActsProxy(track, gctx)
-            );
-        }, py::arg("track"), py::arg("gctx") = Acts::GeometryContext::dangerouslyDefaultConstruct());
-        */
-        /*
-        .def_static("makeRecoTrack", [](py::object trackObj, const Acts::GeometryContext& gctx) {
-            // Fix: Use the official container-defined proxy alias instead of raw templates
-            using IteratorProxy = ActsExamples::TrackContainer::ConstTrackProxy;
-
-            const auto& track = trackObj.cast<const IteratorProxy&>();
-
-            if (!track.hasReferenceSurface()) {
-                return std::make_shared<ActsExamples::RecoTrack>();
-            }
-
-            return std::make_shared<ActsExamples::RecoTrack>(
-                ActsExamples::RecoTrack::FromActsProxy(track, gctx)
-            );
-        }, py::arg("track"), py::arg("gctx") = Acts::GeometryContext::dangerouslyDefaultConstruct());
-        */
-        /* 
-        .def_static("makeRecoTrack", [](py::object trackObj, const Acts::GeometryContext& gctx) {
-            // 1. Safe boundary check
-            if (trackObj.is_none()) {
-                return std::make_shared<ActsExamples::RecoTrack>();
-            }
-
-            // 2. Safely check the attribute dynamically
-            bool has_surface = trackObj.attr("hasReferenceSurface").cast<bool>();
-            if (!has_surface) {
-                return std::make_shared<ActsExamples::RecoTrack>();
-            }
-
-            // 3. Extract the underlying C++ proxy handle using the modern upstream type alias
-            using ProxyType = ActsExamples::TrackContainer::ConstTrackProxy;
-            const auto& track = trackObj.cast<const ProxyType&>();
-
-            // 4. Return using the 1-argument copy constructor with your factory calculations intact
-            return std::make_shared<ActsExamples::RecoTrack>(
-                ActsExamples::RecoTrack::FromActsProxy(track, gctx)
-            );
-        }, py::arg("track"), py::arg("gctx") = Acts::GeometryContext::dangerouslyDefaultConstruct());
-
-        mex.def("pushRecoTrack", [](long vectorAddress, pybind11::object trackObj, const Acts::GeometryContext& gctx) {
-        auto* container = reinterpret_cast<std::vector<ActsExamples::RecoTrack>*>(vectorAddress);
-        if (!container) {
-            throw std::runtime_error("CRITICAL: Null vector pointer provided!");
-        }
-        if (trackObj.is_none()) return;
-
-        bool has_surface = trackObj.attr("hasReferenceSurface").cast<bool>();
-        unsigned int nMeasurements = trackObj.attr("nMeasurements").cast<unsigned int>();
-
-        if (has_surface && nMeasurements > 0) {
-            try {
-                auto params = trackObj.attr("parameters").cast<Acts::BoundVector>();
-                auto cov    = trackObj.attr("covariance").cast<Acts::BoundMatrix>();
-                auto surface = trackObj.attr("referenceSurface").cast<std::shared_ptr<const Acts::Surface>>();
-
-                float chi2        = trackObj.attr("chi2").cast<float>();
-                unsigned int ndof = trackObj.attr("nDoF").cast<unsigned int>();
-
-                std::vector<Double_t> residuals;
-                std::vector<Double_t> pulls;
-                residuals.reserve(nMeasurements);
-                pulls.reserve(nMeasurements);
-
-                bool states_parsed = false;
-
-                try {
-                    unsigned int true_states_found = 0;
-                    auto track_states_seq = trackObj.attr("trackStatesReversed");
-
-                    for (auto handle : track_states_seq) {
-                        const auto& state = handle.cast<const ActsExamples::TrackContainer::ConstTrackStateProxy&>();
-
-                        if (!state.hasUncalibratedSourceLink() || !state.hasCalibrated() || !state.hasSmoothed()) {
-                            continue;
-                        }
-
-                        double meas_loc0 = state.template calibrated<1>()(0);
-                        double meas_err  = state.template calibratedCovariance<1>()(0, 0);
-
-                        double smoothed_loc0 = state.smoothed()(Acts::eBoundLoc0);
-                        double smoothed_err  = state.smoothedCovariance()(Acts::eBoundLoc0, Acts::eBoundLoc0);
-
-                        double res_val = (meas_loc0 - smoothed_loc0);
-                        double res_cov = (meas_err - smoothed_err);
-
-                        residuals.push_back(res_val * 0.1);
-
-                        if (res_cov > 1e-9) {
-                            pulls.push_back(res_val / std::sqrt(res_cov));
-                        } else {
-                            pulls.push_back(meas_err > 0.0 ? (res_val / std::sqrt(meas_err)) : 0.0);
-                        }
-
-                        true_states_found++;
-                    }
-
-                    if (true_states_found > 0) {
-                        states_parsed = true;
-                        std::reverse(residuals.begin(), residuals.end());
-                        std::reverse(pulls.begin(), pulls.end());
-                    }
-                }
-                catch (...) {
-                    states_parsed = false;
-                }
-
-                if (!states_parsed) {
-                    residuals.clear();
-                    pulls.clear();
-                    for (unsigned int i = 0; i < nMeasurements; ++i) {
-                        double res_val = params(Acts::eBoundLoc0);
-                        residuals.push_back(res_val * 0.1);
-                        pulls.push_back(res_val / 0.012);
-                    }
-                }
-
-                container->emplace_back(
-                    params,
-                    cov,
-                    *surface,
-                    chi2,
-                    ndof,
-                    gctx,
-                    residuals,
-                    pulls,
-                    residuals.size()
-                );
-            }
-            catch (const std::exception& e) {
-                std::cout << "WARNING: Track parsing failed or data corrupt: " << e.what() << std::endl;
-                return;
-            }
-        }
-    }, pybind11::arg("vectorAddress"), pybind11::arg("trackObj"), pybind11::arg("gctx"));
-*/
-        // Clean, original 3-argument signature layout! No extra python variables needed.
-        // Clean, original 3-argument signature layout! No extra python variables needed.
-        // Streamlined 4-argument signature layout. trackObj is completely removed!
-        // Streamlined 4-argument signature layout perfectly matching your python pipeline!
     mex.def("pushRecoTrack", [](long vectorAddress, const Acts::GeometryContext& gctx, size_t track_idx, pybind11::object containerObj) {
         auto* container = reinterpret_cast<std::vector<ActsExamples::RecoTrack>*>(vectorAddress);
         if (!container) throw std::runtime_error("CRITICAL: Null pointer!");
         if (containerObj.is_none()) return;
 
         try {
-            // 1. FIXED NATIVE CAST: Map containerObj to ConstTrackContainer reference.
-            // This matches the exact Python class type returned by your macro and eliminates the cast error!
+
             const auto& master_container = containerObj.cast<const ActsExamples::ConstTrackContainer&>();
 
-            // 2. EXTRACTION VIA CONERENT CONST CHANNELS
             auto track = master_container.getTrack(track_idx);
 
             bool has_surface = (&track.referenceSurface() != nullptr);
@@ -328,18 +172,12 @@ namespace ActsPython {
 
                 bool states_parsed = false;
 
-                // =========================================================================
-                // HIGH-PRECISION PRE-REBASE VISIT BACKWARDS RECONSTRUCTION ENGINE
-                // Evaluates completely inside C++ memory boundaries with zero python lookups!
-                // =========================================================================
                 try {
-                    // Extract the core VectorMultiTrajectory straight out of the parent const container
                     const auto& multitrajectory = master_container.trackStateContainer();
                     auto tipIndex = track.tipIndex();
 
                     unsigned int true_states_found = 0;
 
-                    // Execute the precise backwards track geometry visitor loop natively inside C++
                     multitrajectory.visitBackwards(tipIndex, [&](const auto& state) {
                         if (!state.hasUncalibratedSourceLink() || !state.hasCalibrated() || !state.hasSmoothed()) {
                             return true; // Keep iterating backwards
@@ -376,7 +214,6 @@ namespace ActsPython {
                     states_parsed = false;
                 }
 
-                // Analytical math fallback loop if hit states are compressed or empty
                 if (!states_parsed) {
                     residuals.clear();
                     pulls.clear();
@@ -386,7 +223,6 @@ namespace ActsPython {
                         pulls.push_back(res_val / 0.012);
                     }
                 }
-                // =========================================================================
 
                 container->emplace_back(
                     params,
@@ -407,259 +243,12 @@ namespace ActsPython {
         }
     }, pybind11::arg("vectorAddress"), pybind11::arg("gctx"), pybind11::arg("track_idx"), pybind11::arg("containerObj"));
 
-
-    /*
-        mex.def("pushRecoTrack", [](long vectorAddress, pybind11::object trackObj, const Acts::GeometryContext& gctx) {
-        auto* container = reinterpret_cast<std::vector<ActsExamples::RecoTrack>*>(vectorAddress);
-        if (!container) {
-            throw std::runtime_error("CRITICAL: Null vector pointer provided!");
-        }
-        if (trackObj.is_none()) return;
-
-        // 1. Cast directly to the underlying compiled C++ TrackProxy reference.
-        // This eliminates slow and unstable string-based Python lookup calls.
-        using ProxyType = ActsExamples::TrackContainer::TrackProxy;
-        const auto& track = trackObj.cast<const ProxyType&>();
-
-        // 2. NATIVE SURFACE VALIDATION (The exact ACTS main pattern)
-        bool has_surface = (&track.referenceSurface() != nullptr);
-        unsigned int nMeasurements = track.nMeasurements();
-
-        if (has_surface && nMeasurements > 0) {
-            try {
-                auto params  = track.parameters();
-                auto cov     = track.covariance();
-                const auto& surface = track.referenceSurface();
-
-                float chi2        = track.chi2();
-
-                // 3. NATIVE NDOF CHECK (Matches lowercase .ndof() on ACTS main head)
-                unsigned int ndof = track.nDoF();
-
-                std::vector<Double_t> residuals;
-                std::vector<Double_t> pulls;
-                residuals.reserve(nMeasurements);
-                pulls.reserve(nMeasurements);
-
-                bool states_parsed = false;
-
-                try {
-                    unsigned int true_states_found = 0;
-
-                    // 4. NATIVE STATES LOOPING (Iterates smoothly over internal track state tables)
-                    for (const auto& state : track.trackStatesReversed()) {
-
-                        if (!state.hasUncalibratedSourceLink() || !state.hasCalibrated() || !state.hasSmoothed()) {
-                            continue;
-                        }
-
-                        double meas_loc0 = state.template calibrated<1>()(0);
-                        double meas_err  = state.template calibratedCovariance<1>()(0, 0);
-
-                        double smoothed_loc0 = state.smoothed()(Acts::eBoundLoc0);
-                        double smoothed_err  = state.smoothedCovariance()(Acts::eBoundLoc0, Acts::eBoundLoc0);
-
-                        double res_val = (meas_loc0 - smoothed_loc0);
-                        double res_cov = (meas_err - smoothed_err);
-
-                        residuals.push_back(res_val * 0.1); // Convert units for FairShip (mm -> cm)
-
-                        if (res_cov > 1e-9) {
-                            pulls.push_back(res_val / std::sqrt(res_cov));
-                        } else {
-                            pulls.push_back(meas_err > 0.0 ? (res_val / std::sqrt(meas_err)) : 0.0);
-                        }
-
-                        true_states_found++;
-                    }
-
-                    if (true_states_found > 0) {
-                        states_parsed = true;
-                        std::reverse(residuals.begin(), residuals.end());
-                        std::reverse(pulls.begin(), pulls.end());
-                    }
-                }
-                catch (...) {
-                    states_parsed = false;
-                }
-
-                // Fallback loop if intermediate states are compressed or absent
-                if (!states_parsed) {
-                    residuals.clear();
-                    pulls.clear();
-                    for (unsigned int i = 0; i < nMeasurements; ++i) {
-                        double res_val = params(Acts::eBoundLoc0);
-                        residuals.push_back(res_val * 0.1);
-                        pulls.push_back(res_val / 0.012);
-                    }
-                }
-
-                // Append the fully calculated object structure directly into FairShip's ROOT array
-                container->emplace_back(
-                    params,
-                    cov,
-                    surface,
-                    chi2,
-                    ndof,
-                    gctx,
-                    residuals,
-                    pulls,
-                    residuals.size()
-                );
-            }
-            catch (const std::exception& e) {
-                std::cout << "WARNING: Track parsing failed or data corrupt: " << e.what() << std::endl;
-                return;
-            }
-        }
-    }, pybind11::arg("vectorAddress"), pybind11::arg("trackObj"), pybind11::arg("gctx"));
-*/
-
-/*
-    mex.def("pushRecoTrack", [](long vectorAddress, py::object trackObj, const Acts::GeometryContext& gctx) {
-        auto* container = reinterpret_cast<std::vector<ActsExamples::RecoTrack>*>(vectorAddress);
-        if (!container) {
-            throw std::runtime_error("CRITICAL: Null vector pointer provided!");
-        }
-
-        using ProxyType = ActsExamples::TrackContainer::ConstTrackProxy;
-        const auto& track = trackObj.cast<const ProxyType&>();
-
-        if (track.hasReferenceSurface()) {
-            if (track.nMeasurements() == 0) {
-                return;
-            }
-
-            try {
-                auto params = track.parameters();
-                auto cov = track.covariance();
-                const auto& surface = track.referenceSurface();
-                float chi2 = static_cast<float>(track.chi2());
-                unsigned int ndof = track.nDoF();
-                unsigned int nMeasurements = track.nMeasurements();
-
-                std::vector<Double_t> residuals;
-                std::vector<Double_t> pulls;
-                residuals.reserve(nMeasurements);
-                pulls.reserve(nMeasurements);
-
-                bool states_parsed = false;
-
-                try {
-                   // const auto& multitrajectory = track.container().trackStateContainer();
-//                    const auto& multitrajectory = track.container().trackStateContainer();
-//                    auto tipIndex = track.tipIndex();
-
-                    unsigned int true_states_found = 0;
-                                        // FIX: Use the official upstream proxy range iterator loop natively!
-                    for (const auto& state : track.trackStatesReversed()) {
-                        if (!state.hasUncalibratedSourceLink() || !state.hasCalibrated() || !state.hasSmoothed()) {
-                            continue; // Standard C++ loop step instead of lambda return
-                        }
-
-                        double meas_loc0 = state.template calibrated<1>()(0);
-                        double meas_err  = state.template calibratedCovariance<1>()(0, 0);
-
-                        double smoothed_loc0 = state.smoothed()(Acts::eBoundLoc0);
-                        double smoothed_err  = state.smoothedCovariance()(Acts::eBoundLoc0, Acts::eBoundLoc0);
-
-                        double res_val = (meas_loc0 - smoothed_loc0);
-                        double res_cov = (meas_err - smoothed_err);
-
-                        residuals.push_back(res_val * 0.1);
-
-                        if (res_cov > 1e-9) {
-                            pulls.push_back(res_val / std::sqrt(res_cov));
-                        } else {
-                            pulls.push_back(meas_err > 0.0 ? (res_val / std::sqrt(meas_err)) : 0.0);
-                        }
-
-                        true_states_found++;
-                    }
-
-                    if (true_states_found > 0) {
-                        states_parsed = true;
-                        std::reverse(residuals.begin(), residuals.end());
-                        std::reverse(pulls.begin(), pulls.end());
-                    }
-                }
-                catch (...) {
-                    states_parsed = false;
-                }
-//
-                    multitrajectory.visitBackwards(tipIndex, [&](const auto& state) {
-                        if (!state.hasUncalibratedSourceLink() || !state.hasCalibrated() || !state.hasSmoothed()) {
-                            return true;
-                        }
-                        double meas_loc0 = state.template calibrated<1>()(0);
-                        double meas_err  = state.template calibratedCovariance<1>()(0, 0);
-
-                        double smoothed_loc0 = state.smoothed()(Acts::eBoundLoc0);
-                        double smoothed_err  = state.smoothedCovariance()(Acts::eBoundLoc0, Acts::eBoundLoc0);
-
-                        double res_val = (meas_loc0 - smoothed_loc0); //Scale up to cm units
-                        double res_cov = (meas_err - smoothed_err);
-
-                        residuals.push_back(res_val * 0.1);
-
-                        if (res_cov > 1e-9) {
-                            pulls.push_back(res_val / std::sqrt(res_cov));
-                        } else {
-                            pulls.push_back(meas_err > 0.0 ? (res_val / std::sqrt(meas_err)) : 0.0);
-                        }
-
-                        true_states_found++;
-                        return true;
-                    });
-
-                    if (true_states_found > 0) {
-                        states_parsed = true;
-                        std::reverse(residuals.begin(), residuals.end());
-                        std::reverse(pulls.begin(), pulls.end());
-                    }
-                }
-                catch (...) {
-                    states_parsed = false;
-                }
-//
-                if (!states_parsed) {
-                    residuals.clear();
-                    pulls.clear();
-                    for (unsigned int i = 0; i < nMeasurements; ++i) {
-                        double res_val = params(Acts::eBoundLoc0);
-                        residuals.push_back(res_val * 0.1);
-                        pulls.push_back(res_val / 0.012);
-                    }
-                }
-
-                container->emplace_back(
-                    params,
-                    cov,
-                    surface,
-                    chi2,
-                    ndof,
-                    gctx,
-                    residuals,
-                    pulls,
-                    residuals.size()
-                );
-
-            }
-            catch (const std::exception& e) {
-                std::cout << "WARNING: Corrupt track discarded: " << e.what() << std::endl;
-                return;
-            }
-        }
-    }, py::arg("vectorAddress"), py::arg("trackObj"), py::arg("gctx"));
-*/
-    // Add this helper function directly to your SHiP C++ bindings module
     mex.def("makeBoundTrackParameters", [](std::shared_ptr<const Acts::Surface> surface,
                                            const Acts::BoundVector& params,
                                            const Acts::BoundMatrix& cov) {
         if (!surface) {
             throw std::runtime_error("makeBoundTrackParameters: Surface pointer is null!");
         }
-        // Natively constructs and returns a heap-allocated BoundTrackParameters instance
         return Acts::BoundTrackParameters(surface, params, cov, Acts::ParticleHypothesis::pion());
     }, pybind11::arg("surface"), pybind11::arg("params"), pybind11::arg("cov"));
 
@@ -670,7 +259,6 @@ namespace ActsPython {
         return surface ? surface->getSharedPtr() : std::shared_ptr<const Acts::Surface>();
     });
 
-    //py::bind_vector<std::vector<ActsExamples::IndexSourceLink>>(mex, "IndexSourceLinkVector");
 
     m.def("makePassThroughCalibrator", []() -> std::shared_ptr<ActsExamples::MeasurementCalibrator> {
         return std::make_shared<ActsExamples::PassThroughCalibrator>();
@@ -852,33 +440,7 @@ namespace ActsPython {
         return residuals;
     });
 
-    /*
-    using ProxyType = ActsExamples::TrackContainer::ConstTrackProxy;
-    py::class_<ProxyType>(mex, "TrackProxy")
-        .def_property_readonly("parameters", [](const ProxyType& self) { return self.parameters(); })
-        .def_property_readonly("chi2", [](const ProxyType& self) { return self.chi2(); })
-        .def_property_readonly("nDoF", [](const ProxyType& self) { return self.nDoF(); })
-        .def_property_readonly("nMeasurements", [](const ProxyType& self) { return self.nMeasurements(); })
-        .def_property_readonly("charge", [](const ProxyType& self) {
-            return self.particleHypothesis().extractCharge(self.qOverP());
-        })
-        .def("hasReferenceSurface", [](const ProxyType& self) { return self.hasReferenceSurface(); })
-        .def_property_readonly("parametersObject", [](const ProxyType& self) {
-            return Acts::BoundTrackParameters(
-                self.referenceSurface().getSharedPtr(),
-                self.parameters(),
-                std::optional<Acts::BoundMatrix>(self.covariance()),
-                Acts::ParticleHypothesis::muon()
-            );
-        });
-    */
-    // Add this custom memory factory right at the start of addSHiP
-//    mex.def("makeTrackContainer", []() {
-//        auto trackBackend = std::make_shared<Acts::VectorTrackContainer>();
-//        auto trajectoryBackend = std::make_shared<Acts::VectorMultiTrajectory>();
-        // Returns a fully connected container with persistent heap memory allocated!
-//        return ActsExamples::TrackContainer(trackBackend, trajectoryBackend);
-//    });
+
 
 
 
@@ -887,8 +449,6 @@ namespace ActsPython {
         const std::vector<unsigned int>& indices,
         py::object initialParamsObj,
         ActsExamples::TrackContainer& outputTracks,
-//        pybind11::object outputTracksObj,
-        //std::shared_ptr<ActsExamples::TrackContainer> outputTracks,
         std::shared_ptr<const Acts::TrackingGeometry> tGeometry,
         std::shared_ptr<const Acts::MagneticFieldProvider> bField) {//-> ActsExamples::TrackContainer {
    
@@ -995,44 +555,24 @@ namespace ActsPython {
         options.energyLoss = true;
         options.referenceSurfaceStrategy = Acts::TrackExtrapolationStrategy::first;
 
-
-        //auto trackBackend = std::make_shared<Acts::VectorTrackContainer>();
-        //auto trajectoryBackend = std::make_shared<Acts::VectorMultiTrajectory>();
-        //ActsExamples::TrackContainer outputTracks(trackBackend, trajectoryBackend);
-
         auto result = fitter.fit(concreteSourceLinks.begin(), concreteSourceLinks.end(), initialParams, options, surfaceSequence, outputTracks);
         if (result.ok()) {
             const auto& track = result.value();
-            std::cout << "=== FIT SUCCESSFUL ===" << std::endl;
-            std::cout << "Measurements added: " << track.nMeasurements() << std::endl;
-            std::cout << "Holes: " << track.nHoles() << std::endl;
-            std::cout << "Chi2: " << track.chi2() << std::endl;
-            std::cout << "Final Q/P: " << track.parameters()[Acts::eBoundQOverP] << std::endl;
+//            std::cout << "=== FIT SUCCESSFUL ===" << std::endl;
+//            std::cout << "Measurements added: " << track.nMeasurements() << std::endl;
+//            std::cout << "Holes: " << track.nHoles() << std::endl;
+//            std::cout << "Chi2: " << track.chi2() << std::endl;
+//            std::cout << "Final Q/P: " << track.parameters()[Acts::eBoundQOverP] << std::endl;
         } else {
-            std::cout << "Fit failed: " << result.error().message() << std::endl;
+//            std::cout << "Fit failed: " << result.error().message() << std::endl;
         }
-        //#return outputTracks;
-                std::cout << "🔍 C++ shared_ptr size verification check = " << outputTracks.size() << std::endl << std::flush;
           return result.ok();
-        //return outputTracks;
-                // ----------------- ADD THIS TEST PRINT HERE -----------------
-        //std::cout << "🔍 C++ TEST: Inside fitTrack, outputTracks size = "
-        //          << outputTracks.size() << " | makeConst size = "
-        //          << outputTracks.size() << std::endl << std::flush;
-        // ------------------------------------------------------------
-        //
-    //}, py::arg("measurements"), py::arg("indices"), py::arg("initialParams"), py::arg("outputTracks"), py::arg("trackingGeometry"), py::arg("magneticField"));
     }, py::arg("measurements"), py::arg("indices"), py::arg("initialParams"),py::arg("outputTracks"), py::arg("trackingGeometry"), py::arg("magneticField"));
 
 
     m.def("makeIndexSourceLink", [](Acts::GeometryIdentifier geoId, std::size_t index) {
         return ActsExamples::IndexSourceLink{geoId, static_cast<unsigned int>(index)};
     });
-
-    /*
-    py::class_<ActsExamples::IndexSourceLink>(mex, "IndexSourceLink")
-        .def(py::init<Acts::GeometryIdentifier, std::size_t>(), py::arg("geoId"), py::arg("index"));
-    */
 
     m.def("createSourceLinks", [](const ActsExamples::MeasurementContainer& measurements,
                                   const std::vector<unsigned int>& indices) {
@@ -1044,59 +584,13 @@ namespace ActsPython {
         }
         return sourceLinks;
     });
-/*
-    py::class_<ActsExamples::VariableMeasurementProxy<6, true>>(m, "MeasurementProxy")
-        .def("geometryId", &ActsExamples::VariableMeasurementProxy<6, true>::geometryId)
-        .def("parameters", [](const ActsExamples::VariableMeasurementProxy<6, true>& self) {
-            return self.parameters();
-        })
-        .def("covariance", [](const ActsExamples::VariableMeasurementProxy<6, true>& self) {
-            return self.covariance();
-        });
-   
-    py::class_<ActsExamples::MeasurementContainer>(m, "MeasurementContainer")
-        .def("__len__", &ActsExamples::MeasurementContainer::size)
-        .def("__getitem__", [](const ActsExamples::MeasurementContainer& c, size_t i) {
-            if (i >= c.size()) throw py::index_error();
-            auto it = c.begin();
-            std::advance(it, i);
-            return *it;
-        });
 
-    py::class_<ActsExamples::TrackContainer, std::shared_ptr<ActsExamples::TrackContainer>>(mex, "TrackContainer")
-        .def("__iter__", [](const ActsExamples::TrackContainer& c) {
-            return py::make_iterator(c.begin(), c.end());
-        }, py::keep_alive<0, 1>());
-*/   
-        // Force pybind11 to hand the persistent C++ heap pointers straight to the Python runtime
-        // Add this custom memory factory function block safely to mex
-        // This instantiates the exact smart-pointer structure the modern alias expects
-    mex.def("makeTrackContainer", []() {
-        // 1. Allocate the concrete tracking memory vectors on the heap via shared_ptrs
-        auto trackBackend = std::make_shared<Acts::VectorTrackContainer>();
-        auto trajectoryBackend = std::make_shared<Acts::VectorMultiTrajectory>();
+//    mex.def("makeTrackContainer", []() {
+//        auto trackBackend = std::make_shared<Acts::VectorTrackContainer>();
+//        auto trajectoryBackend = std::make_shared<Acts::VectorMultiTrajectory>();
 
-        // 2. Return the TrackContainer constructed with fully initialized smart-pointer backends.
-        // This ensures the container shell born in Python is fully mapped to persistent heap memory!
-        return ActsExamples::TrackContainer(trackBackend, trajectoryBackend);
-    });
-/*
-// Bind size, empty, and getTrack as standalone module functions instead
-m.def("get_container_size", [](const ActsExamples::TrackContainer& container) {
-    return container.size();
-});
-
-m.def("is_container_empty", [](const ActsExamples::TrackContainer& container) {
-    return container.size() == 0;
-});
-
-m.def("get_track_at", [](ActsExamples::TrackContainer& container, size_t index) {
-    if (index >= container.size()) {
-        throw py::index_error("Track index out of range");
-    }
-    return container.getTrack(index);
-});
-*/
+//        return ActsExamples::TrackContainer(trackBackend, trajectoryBackend);
+//    });
    
     mex.def("getTrackParameters", [](const ActsExamples::TrackContainer& container) {
         std::vector<Acts::BoundTrackParameters> params;
@@ -1117,18 +611,7 @@ m.def("get_track_at", [](ActsExamples::TrackContainer& container, size_t index) 
         auto transform = Acts::Transform3(Acts::Translation3(z, 0.0, 0.0));
         return Acts::Surface::makeShared<Acts::PerigeeSurface>(transform);
     }, py::arg("z"));
-/*
-    py::class_<Acts::BoundTrackParameters, std::shared_ptr<Acts::BoundTrackParameters>>(mex, "BoundTrackParameters")
-        .def("position", [](const Acts::BoundTrackParameters& self, const Acts::GeometryContext& gctx) {
-            return self.position(gctx);
-        })
-        .def("momentum", [](const Acts::BoundTrackParameters& self) {
-            return self.momentum();
-        })
-        .def_property_readonly("parameters", [](const Acts::BoundTrackParameters& self) {
-            return self.parameters();
-        });
-*/
+
     m.def("createTrackParameters", [](double gx, double gy, double gz,
                                       double px, double py, double pz,
                                       double charge,
@@ -1202,7 +685,6 @@ m.def("get_track_at", [](ActsExamples::TrackContainer& container, size_t index) 
         .def(py::init<const HGCBuilder::Config&>())
         .def("layers", &HGCBuilder::layers);
 
-    // 3. CHANGE 'Detector' to 'ActsExamples::Detector' here as well!
     auto hgcDetector = py::class_<HGCDetector, ActsExamples::Detector, std::shared_ptr<HGCDetector>>(mex, "HGCDetector")
         .def(py::init<const HGCDetector::Config&>())
         .def("trackingGeometry", &HGCDetector::trackingGeometry);
@@ -1226,7 +708,6 @@ m.def("get_track_at", [](ActsExamples::TrackContainer& container, size_t index) 
         std::cout << "==========================" << std::endl;
     });
 
-//Acts::Python::addSHiP(m); 
 
 }
 }
