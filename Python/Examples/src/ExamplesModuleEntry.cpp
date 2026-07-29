@@ -27,6 +27,7 @@ void addPropagation(py::module& mex);
 void addTrackFitting(py::module& mex);
 void addTrackFinding(py::module& mex);
 void addPythonSpecific(py::module& mex);
+void addSHiP(py::module& mex);
 void addTruthTracking(py::module& mex);
 void addHelloWorld(py::module& mex);
 void addVertexing(py::module& mex);
@@ -50,6 +51,7 @@ PYBIND11_MODULE(ActsExamplesPythonBindings, mex) {
   addDigitization(mex);
   addMaterialMapping(mex);
   addPropagation(mex);
+  addSHiP(mex);
   addTrackFitting(mex);
   addTrackFinding(mex);
   addPythonSpecific(mex);

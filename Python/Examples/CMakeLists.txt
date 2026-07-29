@@ -124,6 +124,7 @@ target_sources(
         src/MaterialMapping.cpp
         src/Propagation.cpp
         src/PythonSpecific.cpp
+        src/SHiP.cpp
         src/TrackFinding.cpp
         src/TrackFitting.cpp
         src/TruthTracking.cpp
@@ -169,6 +170,7 @@ target_link_libraries(
         Acts::ExamplesIoCsv
         Acts::ExamplesIoObj
         Acts::ExamplesPropagation
+        Acts::ExamplesSHiP
         Acts::ExamplesTrackFinding
         Acts::ExamplesTrackFitting
         Acts::ExamplesTruthTracking
