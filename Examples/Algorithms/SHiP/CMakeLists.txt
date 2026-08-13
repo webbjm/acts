@@ -8,7 +8,8 @@ acts_add_library(
     src/SHiPFieldProvider.cpp
     src/SHiPMeasurementProvider.cpp
     src/SHiPSeeder.cpp
-    #    src/SHiPTrackContainer.cpp
+    src/DeterministicAnnealingFitter.cpp
+    src/SHiPVertexFitter.cpp
     src/SHiPDetectorElement.cpp
     src/RecoTrack.cpp
     src/RecoVertex.cpp
