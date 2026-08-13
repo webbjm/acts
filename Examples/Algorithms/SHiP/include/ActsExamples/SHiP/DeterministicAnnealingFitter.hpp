@@ -13,7 +13,7 @@
 #include <vector>
 #include <unordered_map>
 
-namespace ActsExamples::SHiP {
+namespace ActsExamples {
 
 /**
  * @class DeterministicAnnealingFitter
@@ -82,4 +82,4 @@ class DeterministicAnnealingFitter {
   std::unique_ptr<const Acts::Logger> m_logger;
 };
 
-}  // namespace ActsExamples::SHiP
+}  // namespace ActsExamples

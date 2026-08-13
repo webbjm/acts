@@ -1037,6 +1037,56 @@ m.def("extrapolateTrackToZ", [](uintptr_t track_ptr_addr, double targetZ_ship) -
         return residuals;
     });
 
+    m.def("fitTrackDAF", [](
+        const ActsExamples::MeasurementContainer& measurements,
+        const std::vector<unsigned int>& indices,
+        py::object initialParamsObj,
+        ActsExamples::TrackContainer& outputTracks,
+        std::shared_ptr<const Acts::TrackingGeometry> tGeometry,
+        std::shared_ptr<const Acts::MagneticFieldProvider> bField,
+        int daf_max_iter /*=6*/,
+        py::object daf_anneal /*=py::none()*/, 
+        double daf_cutoff /*=9.0*/, 
+        double daf_min_variance /*=1e-4*/) {
+        
+        const auto& initialParams = initialParamsObj.cast<const Acts::BoundTrackParameters&>();
+
+        // Build annealing schedule
+        std::vector<double> annealSchedule;
+        try {
+            if (!daf_anneal.is_none()) {
+                annealSchedule = daf_anneal.cast<std::vector<double>>();
+            }
+        } catch(...) {}
+        if (annealSchedule.empty()) {
+            double bStart = 100.0, bFinal = 0.1;
+            unsigned int nSteps = 10;
+            for (unsigned int i = 0; i < nSteps; ++i) {
+                annealSchedule.push_back(bStart * pow(bFinal / bStart, double(i)/(nSteps-1)));
+            }
+        }
+
+        // Create DAF fitter and run
+        ActsExamples::DeterministicAnnealingFitter::Config cfg;
+        cfg.annealingSchedule = annealSchedule;
+        cfg.maxIterations = daf_max_iter;
+        cfg.gateThreshold = daf_cutoff;
+        cfg.minBaseVariance = daf_min_variance;
+        cfg.convergenceTolerance = 1e-3;
+        cfg.priorVarianceScale = 0.8;
+
+        ActsExamples::DeterministicAnnealingFitter fitter(cfg, Acts::Logging::INFO);
+        auto result = fitter.fit(measurements, indices, initialParams, tGeometry, bField, outputTracks);
+
+        // Export diagnostics to Python module (for debugging)
+        try {
+            auto acts_mod = py::module_::import("acts");
+            acts_mod.attr("_last_fit_diagnostics") = result.diagnostics;
+        } catch(...) {}
+
+        return result.success;
+
+    }, py::arg("measurements"), py::arg("indices"), py::arg("initialParams"), py::arg("outputTracks"), py::arg("trackingGeometry"), py::arg("magneticField"), py::arg("daf_max_iter") = 6, py::arg("daf_anneal") = py::none(), py::arg("daf_cutoff") = 9.0, py::arg("daf_min_variance") = 1e-4);
 
     //If used with strawHits requires drift to be set to the correct side//
     m.def("fitTrack", [](

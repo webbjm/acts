@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace ActsExamples::SHiP {
+namespace ActsExamples {
 
 DeterministicAnnealingFitter::DeterministicAnnealingFitter(
     Config config, Acts::Logging::Level logLevel)
@@ -475,4 +475,4 @@ DeterministicAnnealingFitter::Result DeterministicAnnealingFitter::fit(
   return result;
 }
 
-}  // namespace ActsExamples::SHiP
+}  // namespace ActsExamples
