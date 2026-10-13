@@ -38,7 +38,7 @@ Acts::Result<Acts::Vector3> SHiPFieldProvider::getField(const Acts::Vector3& pos
 
     // Coordinate mapping: Rotate Z-Beam (SHiP) to X-Beam (ACTS) about Y-axis
     // X_Ship = -Z_Acts, Y_Ship = Y_Acts, Z_Ship = X_Acts
-    double fileX = pos_acts_cm_z;
+    double fileX = -pos_acts_cm_z;
     double fileY = pos_acts_cm_y;
     double fileZ = pos_acts_cm_x;
 
